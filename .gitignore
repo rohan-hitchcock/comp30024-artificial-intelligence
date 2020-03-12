@@ -4,4 +4,6 @@
 *.synctex.gz
 *.fdb_latexmk
 
+*__pycache__/
+
 .vscode/
