@@ -12,6 +12,7 @@ def main():
         print_board(b.get_print_dict())
         b.find_groups()
         print_board(b.get_print_dict_from_groups())
+        b.find_goal_positions()
     # TODO: find and print winning action sequence
 
 

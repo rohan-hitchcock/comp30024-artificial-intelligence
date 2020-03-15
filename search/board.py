@@ -78,11 +78,28 @@ class Board:
         return b
 
     @staticmethod
-    def manhattan(tuple1, tuple2):
-        return abs(tuple1[0] - tuple2[0]) + abs(tuple1[1] - tuple2[1])
+    def manhattan(pos1, pos2):
+        """ Finds the Manhattan distance between two positions
+
+            Args:
+                pos1: tuple for board coordinate
+                pos2: tuple for board coordinate
+
+            Returns:
+                Manhattan distance (distance only moving in 4 cardinal directions)
+        """
+        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
     @staticmethod
     def get_explosion_radius(stack):
+        """ Finds the coordinates of the 3x3 radius surrounding the stack
+
+            Args:
+                stack: Stack object with its coordinate
+
+            Returns:
+                set of coordinates
+        """
         x = stack.coordinate[0]
         y = stack.coordinate[1]
         radius = set()
@@ -96,33 +113,39 @@ class Board:
         return radius
 
     def find_groups(self):
+        """ Finds the groups of recursively adjacent black stacks
+
+            Returns:
+                list of sets of coordinates
+        """
         groups = []
-        blacks = self.stacks_black[1:]
+        blacks = self.stacks_black.copy()
         blacks_to_remove = []
-        for stack in self.stacks_black:
-            print(stack.coordinate)
+        for stack in blacks:
+            blacks_to_remove.append(stack.coordinate)
             radius = self.get_explosion_radius(stack)
             for other_stack in blacks:
-                print(blacks)
-                print(other_stack.coordinate)
-                print(radius)
                 if other_stack.coordinate in radius:
-                    blacks_to_remove.append(other_stack)
+                    blacks_to_remove.append(other_stack.coordinate)
                     radius.update(self.get_explosion_radius(other_stack))
-                    print(radius)
+            for s in blacks:
+                if s.coordinate in blacks_to_remove:
+                    blacks.remove(s)
             groups.append(radius)
-            [blacks.remove(s) for s in blacks_to_remove]
         self.groups = groups
 
-    # @staticmethod
-    # def find_groups_recursive(black_stacks, group):
-    #     if not black_stacks:
-    #         return
+    def find_group_intersections(self):
+        """ Finds intersections of groups of black stacks. Needed if
+            Number of white stacks less than number of groups
 
-
-
-
-
+            Returns:
+                set of coordinates
+        """
+        intersections = set()
+        for i in range(len(self.groups)):
+            for j in range(i+1, len(self.groups)):
+                intersections.update(self.groups[i].intersection(self.groups[j]))
+        return intersections
 
 if __name__ == "__main__":
     import util
