@@ -165,15 +165,4 @@ if __name__ == "__main__":
             board = Board.create_from_json(fp)
 
         util.print_board(board.get_print_dict())
-
-
-
-        
-
-
-
-
-
-
-
-    
+            
