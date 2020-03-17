@@ -3,7 +3,8 @@
 *.log
 *.synctex.gz
 *.fdb_latexmk
-.vscode/
-*__pycache__/
 .idea/
 venv/
+.vscode/
+*__pycache__/
+

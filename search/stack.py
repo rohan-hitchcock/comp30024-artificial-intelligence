@@ -10,7 +10,8 @@ J_BLACK_NAME = "black"
 
 BOARD_LENGTH = 8
 
-#*******************************************************************************
+
+# *******************************************************************************
 class Stack:
 
     def __init__(self, color, height, x, y):
@@ -65,7 +66,8 @@ class Stack:
         diff_y = abs(stack.y - self.y)
         return (diff_x + diff_y == 1) or (diff_x == 1 and diff_y == 1)
 
-#*******************************************************************************
+
+# *******************************************************************************
 class Board:
 
     def __init__(self):
@@ -109,6 +111,71 @@ class Board:
 
         return c_dict
 
+    def get_print_dict(self):
+        """ Returns a dictionary of this board suitible for printing by the 
+            functions in util.py
+
+            Returns:
+                A dictionary of tuples representing board positions. The 
+                value is the string to be printed on the board      
+        """
+        c_dict = dict()
+        stack_positions = self.coordinate_view()
+        for p in itertools.product(range(BOARD_LENGTH), repeat=2):
+            c_dict[p] = str(stack_positions[p]) if p in stack_positions else ""
+
+        return c_dict
+
+    def stacks(self, color=None):
+        """ A generator for all stacks of the selected color.
+
+            Args:
+                color: (optional) If set to either WHITE or BLACK only returns
+                stacks of that color.
+            
+            Yields:
+                Each Stack object on the board.
+        """
+
+        if color is None:
+            stacks = itertools.chain(self.black_stacks, self.white_stacks)
+        else:
+            stacks = self.white_stacks if color == WHITE else self.black_stacks
+
+        yield from stacks
+
+    def stack_at(self, pos):
+        """ Gets the stack at position pos.
+        
+            Args:
+                pos: a tuple which is a valid coordinate on the board.
+                
+            Returns:
+                The Stack object at position pos or None if no such Stack exists
+        """
+        for s in self.stacks():
+            if s.pos == pos:
+                return s
+
+        return None
+
+    def coordinate_view(self, color=None):
+        """ Gets a view of the board where stacks can be looked up by coordinate, 
+            i.e. a dictionary of stacks keyed by their position. Coordinates 
+            where there is no stack are not present. Each time this method is 
+            called a new dictionary is created, so avoid calling it many times
+            if the board is not changing.
+
+            Args:
+                color: (optional) if left unset all stacks are in the returned
+                dictionary. Otherwise set to BLACK or WHITE to get a dictionary
+                only containing stacks of that color.
+
+            Returns:
+                A dictionary of Stack objected keyed by their coordinate (tuple).
+        """
+        return {s.pos: s for s in self.stacks(color=color)}
+
     @staticmethod
     def create_from_json(json_fp):
         """ Creates a board from a json file (see spec for format).
@@ -121,6 +188,7 @@ class Board:
         """
 
         b = Board()
+
         for i in range(BOARD_LENGTH):
             row = []
             for j in range(BOARD_LENGTH):
@@ -269,11 +337,21 @@ class Board:
             radii.append(radius)
         return radii
 
+    @staticmethod
+    def is_valid_position(pos):
+        if len(pos) != 2:
+            return False
+
+        x, y = pos
+        return x >= 0 and x < BOARD_LENGTH and y >= 0 and y < BOARD_LENGTH
+
+
 if __name__ == "__main__":
 
     import util
 
     all_tests = [
+
         "../tests/test-level-1.json",
         "../tests/test-level-2.json",
         "../tests/test-level-3.json",
