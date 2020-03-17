@@ -1,13 +1,16 @@
 import sys
 import json
 
-from search.util import print_move, print_boom, print_board
+from stack import Board
+from util import print_move, print_boom, print_board
 
 
 def main():
     with open(sys.argv[1]) as file:
-        data = json.load(file)
-
+        b = Board.create_from_json(file)
+        print_board(b.get_print_dict())
+        print_board(b.cc())
+        print_board(b.get_group_radii())
     # TODO: find and print winning action sequence
 
 

@@ -94,7 +94,7 @@ class Board:
 
         return c_dict
 
-    def get_print_dict_from_groups(self):
+    def get_print_dict_from_groups(self, groups):
         """ Returns a dictionary of this boards target groups suitible for printing by the
             functions in util.py
 
@@ -105,24 +105,12 @@ class Board:
         """
 
         c_dict = dict()
-        for s in self.groups:
-            for c in s:
-                c_dict[c] = "*"
-
-        return c_dict
-
-    def get_print_dict(self):
-        """ Returns a dictionary of this board suitible for printing by the 
-            functions in util.py
-
-            Returns:
-                A dictionary of tuples representing board positions. The 
-                value is the string to be printed on the board      
-        """
-        c_dict = dict()
-        stack_positions = self.coordinate_view()
-        for p in itertools.product(range(BOARD_LENGTH), repeat=2):
-            c_dict[p] = str(stack_positions[p]) if p in stack_positions else ""
+        for label, set in groups.items():
+            for tup in set:
+                if tup in c_dict:
+                    c_dict[tup] = str(c_dict[tup]) + "/" + str(label)
+                else:
+                    c_dict[tup] = label
 
         return c_dict
 
@@ -154,7 +142,7 @@ class Board:
                 The Stack object at position pos or None if no such Stack exists
         """
         for s in self.stacks():
-            if s.pos == pos:
+            if (s.x, s.y) == pos:
                 return s
 
         return None
@@ -174,7 +162,7 @@ class Board:
             Returns:
                 A dictionary of Stack objected keyed by their coordinate (tuple).
         """
-        return {s.pos: s for s in self.stacks(color=color)}
+        return {(s.x, s.y): s for s in self.stacks(color=color)}
 
     @staticmethod
     def create_from_json(json_fp):
@@ -204,8 +192,6 @@ class Board:
                 else:
                     b.stacks_black.append(Stack(BLACK, h, x, y))
                     b.state[x][y] = 1
-        # b.stacks_black.sort(key=lambda s: (s.coordinate[0], s.coordinate[1]))
-        # b.stacks_white.sort(key=lambda s: (s.coordinate[0], s.coordinate[1]))
         return b
 
     @staticmethod
@@ -328,14 +314,15 @@ class Board:
             Returns:
                 a list of sets of coordinates
         """
-        radii = list()
-        for group in self.groups.values():
+        radii = dict()
+        for label, group in self.groups.items():
             radius = set()
             for tup in group:
                 radius.update(Board.coordinate_neighbours(tup[0], tup[1], True))
             radius = radius - group
-            radii.append(radius)
-        return radii
+            radii[label] = radius
+        print(radii)
+        return self.get_print_dict_from_groups(radii)
 
     @staticmethod
     def is_valid_position(pos):
@@ -364,3 +351,4 @@ if __name__ == "__main__":
             board = Board.create_from_json(fp)
 
         util.print_board(board.get_print_dict())
+
