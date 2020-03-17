@@ -10,9 +10,9 @@ def main():
         # data = json.load(file)
         b = Board.create_from_json(file)
         print_board(b.get_print_dict())
-        b.find_groups()
-        print_board(b.get_print_dict_from_groups())
-        b.find_goal_positions()
+        print_board(b.cc())
+        print(b.groups)
+        print(b.get_group_radii())
     # TODO: find and print winning action sequence
 
 
