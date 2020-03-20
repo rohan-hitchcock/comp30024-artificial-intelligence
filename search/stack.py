@@ -278,7 +278,29 @@ class Board:
                 radius.update(Stack.explosion_radius(tup[0], tup[1], True))
             radius = radius - group
             radii[label] = radius
-        return self.get_print_dict_from_groups(radii)
+        if len(radii) > len(self.stacks_white):
+            return self.intersecting_groups(radii)
+        else:
+            return radii
+
+    def intersecting_groups(self, radii):
+        sets = list(radii.values())
+        results = []
+        while sets:
+            first, rest = sets[0], sets[1:]
+            merged = False
+            sets = []
+            for s in rest:
+                if s and s.isdisjoint(first):
+                    sets.append(s)
+                else:
+                    first &= s
+                    merged = True
+            if merged:
+                sets.append(first)
+            else:
+                results.append(first)
+        return results
 
     @staticmethod
     def is_valid_position(pos):

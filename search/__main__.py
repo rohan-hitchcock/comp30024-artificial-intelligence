@@ -10,7 +10,11 @@ def main():
         b = Board.create_from_json(file)
         print_board(b.get_print_dict())
         print_board(b.cc())
-        print_board(b.get_group_radii())
+        print(b.groups)
+        print_board(b.get_print_dict_from_groups(b.get_group_radii()))
+        print(b.get_group_radii())
+        print(b.intersecting_groups())
+        print(list(b.get_group_radii().values())==b.intersecting_groups())
     # TODO: find and print winning action sequence
 
 
