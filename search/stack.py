@@ -53,26 +53,14 @@ class Stack:
             Returns:
                 set of coordinates
         """
-        radius = set()
-        for i in range(self.x - 1, self.x + 2):
-            if i < 0 or i >= BOARD_LENGTH:
-                continue
-            for j in range(self.y - 1, self.y + 2):
-                if j < 0 or j >= BOARD_LENGTH or (i == self.x and j == self.y):
-                    continue
-                radius.update([(i, j)])
-        return radius
+        return set(Stack.explosion_radius(self.x, self.y, False))
 
-    def is_in_explosion_radius(self, stack):
-        diff_x = abs(stack.x - self.x)
-        diff_y = abs(stack.y - self.y)
-        return (diff_x + diff_y == 1) or (diff_x == 1 and diff_y == 1)
-
-    def explosion_radius(self):
+    @staticmethod
+    def explosion_radius(x, y, include_self):
         return (
-            p for p in itertools.product(range(self.x - EXPL_RAD, self.x + EXPL_RAD + 1),
-                                         range(self.y - EXPL_RAD, self.y + EXPL_RAD + 1))
-            if Board.is_valid_position(p)
+            p for p in itertools.product(range(x - EXPL_RAD, x + EXPL_RAD + 1),
+                                         range(y - EXPL_RAD, y + EXPL_RAD + 1))
+            if Board.is_valid_position(p) and (include_self or (x, y) != p)
         )
 
     def is_in_radius(self, other):
@@ -125,8 +113,8 @@ class Board:
         """
 
         c_dict = dict()
-        for label, set in groups.items():
-            for tup in set:
+        for label, s in groups.items():
+            for tup in s:
                 if tup in c_dict:
                     c_dict[tup] = str(c_dict[tup]) + "/" + str(label)
                 else:
@@ -242,33 +230,6 @@ class Board:
         """
         return abs(x1 - x2) + abs(y1 - y2)
 
-    # At the moment this method has exact same logic as Stack.get_explosion_radius
-    # except that it takes in a coordinate, and a boolean to determine whether or not
-    # the coordinate whose neighbours we want should be kept. I needed this for other functions
-    # and cant use stack for here.
-    @staticmethod
-    def coordinate_neighbours(x, y, include_self):
-        """ Finds the 8 neighbours of a coordinate if they are on the board
-
-            Args:
-                x: x coordinate of position
-                y: y coordinate of position
-                include_self: boolean to indicate whether we want to keep the
-                coordinate itself.
-
-            Returns:
-                list of neighbouring coordinates on the board
-        """
-        neighbours = set()
-        for i in range(x - 1, x + 2):
-            if i < 0 or i >= BOARD_LENGTH:
-                continue
-            for j in range(y - 1, y + 2):
-                if j < 0 or j >= BOARD_LENGTH or (not include_self and i == x and j == y):
-                    continue
-                neighbours.add((i, j))
-        return neighbours
-
     def flood_fill(self, x, y, label):
         """ recursively gives neighbours the same label
 
@@ -279,7 +240,7 @@ class Board:
         """
         self.state[x][y] = label
         self.groups[label].update([(x, y)])
-        for tup in Board.coordinate_neighbours(x, y, False):
+        for tup in Stack.explosion_radius(x, y, False):
             if self.state[tup[0]][tup[1]] == 1:
                 self.flood_fill(tup[0], tup[1], label)
 
@@ -314,7 +275,7 @@ class Board:
         for label, group in self.groups.items():
             radius = set()
             for tup in group:
-                radius.update(Board.coordinate_neighbours(tup[0], tup[1], True))
+                radius.update(Stack.explosion_radius(tup[0], tup[1], True))
             radius = radius - group
             radii[label] = radius
         return self.get_print_dict_from_groups(radii)

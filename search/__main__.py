@@ -1,7 +1,7 @@
 import sys
 import json
 
-from stack import Board
+from stack import Board, Stack
 from util import print_move, print_boom, print_board
 
 
