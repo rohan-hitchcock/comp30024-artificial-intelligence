@@ -10,6 +10,8 @@ J_BLACK_NAME = "black"
 
 BOARD_LENGTH = 8
 
+EXPL_RAD = 1
+
 #*******************************************************************************
 class Stack:
 
@@ -40,6 +42,31 @@ class Stack:
         
         assert self.color == other.color and self.pos == other.pos
         return Stack(self.color, self.height + other.height, self.pos)
+
+    def explosion_radius(self):
+        cx, cy = self.pos
+
+        return (
+                    p for p in itertools.product(range(cx-EXPL_RAD, cx+EXPL_RAD), range(cy-EXPL_RAD, cy+EXPL_RAD))
+                    if Board.is_valid_position(p)
+                )
+
+    def is_in_radius(self, other):
+
+        sx, sy = self.pos
+        ox, oy = other.pos
+
+        return abs(sx - ox) <= EXPL_RAD and abs(sy - oy) <= EXPL_RAD
+
+    def is_valid_move(self, new_pos):
+        
+        curr_x, curr_y = self.pos
+        new_x, new_y = new_pos
+
+        return (
+                    (curr_x == new_x or curr_y == new_y) and 
+                    (abs(curr_x - new_x + curr_y - new_y) <= self.height)
+                )
 
 #*******************************************************************************
 class Board:
@@ -165,4 +192,3 @@ if __name__ == "__main__":
             board = Board.create_from_json(fp)
 
         util.print_board(board.get_print_dict())
-            
