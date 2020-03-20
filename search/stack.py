@@ -222,30 +222,6 @@ class Board:
         """
         return abs(x1 - x2) + abs(y1 - y2)
 
-    # This was my original way of immediately finding the sets of group radii from
-    # black stack list, dont think it's great though
-    # def find_groups(self):
-    #     """ Finds the groups of recursively adjacent black stacks
-    #
-    #         Returns:
-    #             list of sets of coordinates
-    #     """
-    #     groups = []
-    #     blacks = self.stacks_black.copy()
-    #     blacks_to_remove = []
-    #     for stack in blacks:
-    #         blacks_to_remove.append(stack.coordinate)
-    #         radius = self.get_explosion_radius(stack)
-    #         for other_stack in blacks:
-    #             if other_stack.coordinate in radius:
-    #                 blacks_to_remove.append(other_stack.coordinate)
-    #                 radius.update(self.get_explosion_radius(other_stack))
-    #         for s in blacks:
-    #             if s.coordinate in blacks_to_remove:
-    #                 blacks.remove(s)
-    #         groups.append(radius)
-    #     self.groups = groups
-
     # At the moment this method has exact same logic as Stack.get_explosion_radius
     # except that it takes in a coordinate, and a boolean to determine whether or not
     # the coordinate whose neighbours we want should be kept. I needed this for other functions
@@ -321,16 +297,22 @@ class Board:
                 radius.update(Board.coordinate_neighbours(tup[0], tup[1], True))
             radius = radius - group
             radii[label] = radius
-        print(radii)
         return self.get_print_dict_from_groups(radii)
 
     @staticmethod
     def is_valid_position(pos):
+        """ Checks that the provided position is a valid board position
+
+            Args:
+                pos: the position to be checked
+            Returns:
+                A boolean representing if the position is valid or not
+        """
         if len(pos) != 2:
             return False
 
         x, y = pos
-        return x >= 0 and x < BOARD_LENGTH and y >= 0 and y < BOARD_LENGTH
+        return 0 <= x < BOARD_LENGTH and 0 <= y < BOARD_LENGTH
 
 
 if __name__ == "__main__":
