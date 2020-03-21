@@ -1,6 +1,7 @@
 import heapq
 from collections import defaultdict as dd
 
+
 class PriorityNode:
     """ This class is used to encode priority information about a node (anything).
         It allows custom implementation of a 'comparable' interface (in Java 
@@ -9,6 +10,7 @@ class PriorityNode:
         Before use, PriorityNode.__lt__ must be assigned to a callable to define
         how comparison works. 
     """
+
     def __init__(self, node):
         self.node = node
 
@@ -16,17 +18,18 @@ class PriorityNode:
         self.node == other.node
 
     def __lt__(self, other):
-        #Choose how this when the class is used!
+        # Choose how this when the class is used!
         pass
 
     def __gt__(self, other):
         return not self < other
-    
+
     def __ge__(self, other):
         return self == other or self > other
 
     def __le__(self, other):
         return self == other or self < other
+
 
 def expand_free(node):
     """ Expands a node to all four of its north, south, east, west neighbors.
@@ -39,6 +42,7 @@ def expand_free(node):
     """
     x, y = node
     return [(x, y + 1), (x, y - 1), (x + 1, y), (x - 1, y)]
+
 
 def path_to(node, prev_node):
     """ Reconstructs the path to node.
@@ -57,6 +61,7 @@ def path_to(node, prev_node):
     l.reverse()
     return l
 
+
 def l1_norm_cost(p, goals):
     """ Returns the minimum L1-norm distance of p to any point in goals.
     
@@ -67,6 +72,7 @@ def l1_norm_cost(p, goals):
             The minimum distance of p to any point in goals
     """
     return min(sum(abs(x - y) for x, y in zip(p, g)) for g in goals)
+
 
 def a_star(start, goals, cost_to_goal, expand_node):
     """ The world-famous A* algorithm. Note it is generic and does not assume 
@@ -88,10 +94,10 @@ def a_star(start, goals, cost_to_goal, expand_node):
     open_nodes = [PriorityNode(start)]
 
     prev_node = {start: None}
-    cost = dd(lambda : float("inf"))
+    cost = dd(lambda: float("inf"))
     cost[start] = 0
     priority = {start: cost_to_goal(start, goals)}
-    
+
     PriorityNode.__lt__ = lambda x, y: priority[x.node] < priority[y.node]
 
     while open_nodes:
@@ -102,18 +108,18 @@ def a_star(start, goals, cost_to_goal, expand_node):
 
         heap_changed = False
         for neighbor in expand_node(curr_node):
-            
+
             if cost[neighbor] > cost[curr_node] + 1:
-                
+
                 if cost[neighbor] == float("inf"):
                     open_nodes.append(PriorityNode(neighbor))
-                
+
                 cost[neighbor] = 1 + cost[curr_node]
                 priority[neighbor] = cost[neighbor] + cost_to_goal(neighbor, goals)
                 prev_node[neighbor] = curr_node
 
                 heap_changed = True
-        
+
         if heap_changed:
             heapq.heapify(open_nodes)
 
@@ -128,4 +134,3 @@ if __name__ == "__main__":
 
     for n in a_star(start, goals, l1_norm_cost, expand_free):
         print(n)
-
