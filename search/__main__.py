@@ -2,8 +2,8 @@ import sys
 import json
 from collections import defaultdict as dd
 
-import search.board as bd
-from search import util
+import board as bd
+import util
 
 
 def get_labeled_print(components):
@@ -35,6 +35,7 @@ def main():
         util.print_board(get_labeled_print(components))
         print("Explosion radii")
         util.print_board(get_labeled_print(bd.Board.explosion_radius(c) for c in components))
+        print(b.intersecting_radii(color='b'))
 
     # TODO: find and print winning action sequence
 
