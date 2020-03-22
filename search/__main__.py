@@ -1,20 +1,41 @@
 import sys
 import json
+from collections import defaultdict as dd
 
-from stack import Board, Stack
-from util import print_move, print_boom, print_board
+import board as bd
+import util
+
+
+def get_labeled_print(components):
+    """ Accepts a finite iterable of iterables of valid board positions. 
+        Returns a dictionary suitible for printing where each position is labeled
+        by the index of the iterable containing it in components"""
+
+    print_dict = dd(str)
+    for component_id, component in enumerate(components):
+        for pos in component:
+
+            if str(component_id) not in print_dict[pos]:
+                print_dict[pos] += str(component_id)
+
+    return print_dict
+    
 
 
 def main():
     with open(sys.argv[1]) as file:
-        b = Board.create_from_json(file)
-        print_board(b.get_print_dict())
-        print_board(b.cc())
-        print(b.groups)
-        print_board(b.get_print_dict_from_groups(b.get_group_radii()))
-        print(b.get_group_radii())
-        print(b.intersecting_groups())
-        print(list(b.get_group_radii().values())==b.intersecting_groups())
+        b = bd.Board.create_from_json(file)
+
+        print("Board:")
+        util.print_board(b.get_print_dict())
+
+        components = b.components()
+
+        print("Components:")
+        util.print_board(get_labeled_print(components))
+        print("Explosion radii")
+        util.print_board(get_labeled_print(bd.Board.explosion_radius(c) for c in components))
+
     # TODO: find and print winning action sequence
 
 

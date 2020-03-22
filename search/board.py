@@ -83,33 +83,37 @@ class Board:
         return {p: self.as_string(p) for p in Board.positions()}
     
     def components(self, color=None):
+        """ Finds the groups of stacks in the same 'explosion component', that 
+            a group of stacks which will explode if any member in the group 
+            explodes.
 
+            Args:
+                color: (optional) set WHITE or BLACK to only look at tokens of 
+                a particular color
+
+            Returns:
+                A list of disjoint sets, where each set contains the positions 
+                of stacks which will explode if any other member of the stack 
+                explodes.
+        """
         ungrouped_stacks = set(self.stack_positions(color=color))
 
         compontents = []
         while ungrouped_stacks:
-
-            to_visit = [ungrouped_stacks.pop()]
+            to_visit = {ungrouped_stacks.pop()}
             component = set()
             while to_visit:
-
+                
                 s = to_visit.pop()
-
                 for n in ungrouped_stacks:
-                    if Board.in_explosion_radius(s, n):
-                        to_visit.append(n)
-
+                    if Board.in_explosion_radius(s, n) and (n not in component):
+                        to_visit.add(n)
+                        
                 component.add(s)
             
             compontents.append(component)
             ungrouped_stacks -= component
         return compontents
-
-
-
-
-    
-
 
     @staticmethod
     def positions():
@@ -121,20 +125,23 @@ class Board:
         yield from itertools.product(range(Board.length), repeat=2)
 
     @staticmethod
-    def explosion_radius(p):
+    def explosion_radius(ps):
         """ Iterates over the points inside an explosion centered on p
 
             Args:
-                p: A valid board position
+                ps: An iterable of valid board positions
 
             Yields:
-                Valid board positions in the explosion radius of p
+                Valid board positions in the explosion radius of ps
         """
-        x, y = p
-        return (
-            p for p in itertools.product(range(x - Board.expl_rad, x + Board.expl_rad + 1), range(y - Board.expl_rad, y + Board.expl_rad + 1))
-            if Board.is_valid_position(p)
-        )
+        for p in ps:
+            x, y = p
+            yield from (
+                p for p in itertools.product(
+                    range(x - EXPL_RAD, x + EXPL_RAD + 1), 
+                    range(y - EXPL_RAD, y + EXPL_RAD + 1)
+                ) if Board.is_valid_position(p)
+            )
 
     @staticmethod
     def in_explosion_radius(p1, p2):
