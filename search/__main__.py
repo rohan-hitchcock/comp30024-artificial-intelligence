@@ -2,8 +2,8 @@ import sys
 import json
 from collections import defaultdict as dd
 
-import board as bd
-import util
+import search.board as bd
+from search import util
 
 
 def get_labeled_print(components):
