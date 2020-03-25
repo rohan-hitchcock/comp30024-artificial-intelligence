@@ -115,6 +115,37 @@ class Board:
             ungrouped_stacks -= component
         return compontents
 
+    def intersecting_radii(self, color=None):
+        """ Finds which sets of coordinates are not disjoint, and returns the
+            intersection of those that are.
+
+            Args:
+                color: (optional) set WHITE or BLACK to only look at tokens of
+                a particular color
+
+            Returns:
+                A list of disjoint sets, where each set contains the positions
+                for which the corresponding group/(s) of stacks can be detonated from.
+        """
+        sets = [set(self.explosion_radius(c)) for c in self.components(color=color)]
+        results = []
+        while sets:
+            first, rest = sets[0], sets[1:]
+            merged = False
+            sets = []
+            for s in rest:
+                if s and s.isdisjoint(first):
+                    sets.append(s)
+                else:
+                    first &= s
+                    merged = True
+            if merged:
+                sets.append(first)
+            else:
+                results.append(first)
+        return results
+
+
     @staticmethod
     def positions():
         """ Iterates over every valid board position
