@@ -4,6 +4,7 @@ from collections import defaultdict as dd
 
 import search.board as bd
 from search import util
+from search import searcher
 
 
 def get_labeled_print(components):
@@ -29,16 +30,12 @@ def main():
         print("Board:")
         util.print_board(b.get_print_dict())
 
-        components = b.components()
+        
+        paths = searcher.find_paths(b)
 
-        print("Components:")
-        util.print_board(get_labeled_print(components))
-        print("Explosion radii")
-        util.print_board(get_labeled_print(bd.Board.explosion_radius(c) for c in components))
-        print(b.intersecting_radii(color='b'))
-
-    # TODO: find and print winning action sequence
-
+        print("\nall paths:")
+        for w, p in paths.items():
+            print(f"{w} follows {p}")
 
 
 if __name__ == '__main__':

@@ -13,9 +13,6 @@ BOARD_LENGTH = 8
 
 EXPL_RAD = 1
 
-
-
-
 class Board:
 
     length = BOARD_LENGTH
@@ -115,36 +112,26 @@ class Board:
             ungrouped_stacks -= component
         return compontents
 
-    def intersecting_radii(self, color=None):
-        """ Finds which sets of coordinates are not disjoint, and returns the
-            intersection of those that are.
+    def possible_moves(self, wp, h):
+        """ Generates all moves possible for a given white position wp.
 
             Args:
-                color: (optional) set WHITE or BLACK to only look at tokens of
-                a particular color
+                wp: the coordinate of a white stack
+                h: the height of wp
 
-            Returns:
-                A list of disjoint sets, where each set contains the positions
-                for which the corresponding group/(s) of stacks can be detonated from.
+            Yields:
+                positions on this board which are a valid move for a white 
+                stack at wp
         """
-        sets = [set(self.explosion_radius(c)) for c in self.components(color=color)]
-        results = []
-        while sets:
-            first, rest = sets[0], sets[1:]
-            merged = False
-            sets = []
-            for s in rest:
-                if s and s.isdisjoint(first):
-                    sets.append(s)
-                else:
-                    first &= s
-                    merged = True
-            if merged:
-                sets.append(first)
-            else:
-                results.append(first)
-        return results
+        wpx, wpy = wp
+    
+        #tests whether a generated position e is a valid move from s 
+        valid = lambda s, e : Board.is_valid_position(e) and (s != e) and (e not in self.black)
 
+        return itertools.chain(
+            ((x, wpy) for x in range(wpx - h, wpx + h + 1) if valid(wp, (x, wpy))),
+            ((wpx, y) for y in range(wpy - h, wpy + h + 1) if valid(wp, (wpx, y)))
+        )
 
     @staticmethod
     def positions():
@@ -230,6 +217,7 @@ class Board:
 if __name__ == "__main__":
 
     import util
+    import random
 
     all_tests = [
 
@@ -244,7 +232,23 @@ if __name__ == "__main__":
         with open(infile) as fp:
             board = Board.create_from_json(fp)
 
-        util.print_board(board.get_print_dict())
+        #randomly increase stack sizes
+        for white_stack in board.stack_positions(color=WHITE):
+            board.white[white_stack] += random.randint(0, 2)
 
+        #pylint:disable=no-member
+        print_dict = board.get_print_dict()
+        #util.print_board(print_dict)
 
+        for white_stack in board.stack_positions(color=WHITE):
+            print(f"{white_stack} can move to {list(board.possible_moves(white_stack), board.height_at(white_stack))}")
+        
 
+        
+        for i, x in enumerate(board.intersecting_radii(color=BLACK)):
+
+            for p in x:
+                print_dict[p] += str(i)
+
+        util.print_board(print_dict)
+            
