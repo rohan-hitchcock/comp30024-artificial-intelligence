@@ -32,10 +32,10 @@ class State:
     def change_state(self, pos1, pos2, h):
         new_state_dict = self.white.copy()
         if self.white[pos1] == h:
-            new_state_dict[pos2] = new_state_dict.pop(pos1, 0)
+            new_state_dict.pop(pos1)
         else:
-            new_state_dict[pos2] = new_state_dict[pos2]+h
-            new_state_dict[pos1] = new_state_dict[pos1]-h
+            new_state_dict[pos1] -= h
+        new_state_dict[pos2] += h
         return State.create_from_dict(new_state_dict)
 
     @staticmethod
