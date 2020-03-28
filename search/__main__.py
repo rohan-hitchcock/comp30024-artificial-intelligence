@@ -29,6 +29,9 @@ def main():
 
         print("Board:")
         util.print_board(b.get_print_dict())
+        b.generate_states()
+        for l in b.generate_states():
+            print(l)
         
         paths = searcher.find_paths(b)
 

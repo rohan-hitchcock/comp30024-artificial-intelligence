@@ -2,6 +2,7 @@ from collections import defaultdict as dd
 from collections import namedtuple
 import json
 import itertools
+from search.state import State
 
 BLACK = 'b'
 WHITE = 'w'
@@ -22,6 +23,7 @@ class Board:
         """ Initialises and empty Board """
         self.black = dict()
         self.white = dict()
+        self.state = None
 
     def height_at(self, p, color=None):
         """ Returns the height of the stack at the given position, or 0 if no 
@@ -133,6 +135,33 @@ class Board:
             ((wpx, y) for y in range(wpy - h, wpy + h + 1) if valid(wp, (wpx, y)))
         )
 
+    def possible_moves_new(self, wp, h):
+        """ Generates all moves possible for a given white position wp.
+
+            Args:
+                wp: the coordinate of a white stack
+                h: the height of wp
+
+            Yields:
+                positions on this board which are a valid move for a white
+                stack at wp
+        """
+        wpx, wpy = wp
+
+        # tests whether a generated position e is a valid move from s
+        valid = lambda s, e: Board.is_valid_position(e) and (s != e) and (e not in self.black)
+
+        moves = []
+        for n in range(1, h + 1):
+            for x in range(wpx - h, wpx + h + 1):
+                if valid(wp, (x, wpy)):
+                    moves.append(((x, wpy), n))
+            for y in range(wpy - h, wpy + h + 1):
+                if valid(wp, (wpx, y)):
+                    moves.append(((wpx, y), n))
+
+        return moves
+
     @staticmethod
     def positions():
         """ Iterates over every valid board position
@@ -212,6 +241,20 @@ class Board:
                 else:
                     b.white[(x, y)] = height
         return b
+
+    def generate_states(self):
+        """ Creates a list of State objects reachable from the current stored State
+
+            Returns:
+                A list of State objects
+        """
+        if self.state is None:
+            self.state = State.create_from_dict(self.white)
+        states = []
+        for c, h in self.white.items():
+            for t, n in self.possible_moves_new(c, h):
+                states.append(self.state.change_state(c, t, n))
+        return states
 
 
 if __name__ == "__main__":
