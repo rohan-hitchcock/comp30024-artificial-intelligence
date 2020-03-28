@@ -122,30 +122,9 @@ class Board:
                 h: the height of wp
 
             Yields:
-                positions on this board which are a valid move for a white 
-                stack at wp
-        """
-        wpx, wpy = wp
-
-        # tests whether a generated position e is a valid move from s
-        valid = lambda s, e: Board.is_valid_position(e) and (s != e) and (e not in self.black)
-
-        return itertools.chain(
-            ((x, wpy) for x in range(wpx - h, wpx + h + 1) if valid(wp, (x, wpy))),
-            ((wpx, y) for y in range(wpy - h, wpy + h + 1) if valid(wp, (wpx, y)))
-        )
-
-    def possible_moves_new(self, wp, h):
-        """ Generates all moves possible for a given white position wp.
-
-            Args:
-                wp: the coordinate of a white stack
-                h: the height of wp
-
-            Yields:
                 positions on this board which are a valid move for a white
                 stack at wp
-        """
+        """ 
         wpx, wpy = wp
 
         # tests whether a generated position e is a valid move from s
@@ -252,10 +231,9 @@ class Board:
             self.state = State.create_from_dict(self.white)
         states = []
         for c, h in self.white.items():
-            for t, n in self.possible_moves_new(c, h):
+            for t, n in self.possible_moves(c, h):
                 states.append(self.state.change_state(c, t, n))
         return states
-
 
 if __name__ == "__main__":
 
@@ -284,7 +262,7 @@ if __name__ == "__main__":
         # util.print_board(print_dict)
 
         for white_stack in board.stack_positions(color=WHITE):
-            print(f"{white_stack} can move to {list(board.possible_moves(white_stack), board.height_at(white_stack))}")
+            print(f"{white_stack} can move to {list(board.possible_moves(white_stack, board.height_at(white_stack)))}")
 
         for i, x in enumerate(board.intersecting_radii(color=BLACK)):
 

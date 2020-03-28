@@ -66,7 +66,6 @@ def a_star(start, goals, cost_to_goal, expand_node):
 
         heap_changed = False
         for neighbor in expand_node(curr_node):
-
             if cost[neighbor] > cost[curr_node] + 1:
 
                 if cost[neighbor] == float("inf"):
@@ -89,8 +88,10 @@ def find_paths(board):
 
     poss_paths = dict()
     for white_stack, goal in itertools.product(board.white, goal_states):
+        
 
-        expander = lambda p: board.possible_moves(p, board.height_at(white_stack))
+        expander = lambda p : (e[0] for e in board.possible_moves(p, board.height_at(white_stack)))
+        
         path_to_goal = a_star(white_stack, goal, l1_norm_cost, expander)
 
         if path_to_goal is not None:
