@@ -5,6 +5,7 @@ from collections import defaultdict as dd
 import search.board as bd
 from search import util
 from search import searcher
+from search.state import State
 
 
 def get_labeled_print(components):
@@ -29,9 +30,8 @@ def main():
 
         print("Board:")
         util.print_board(b.get_print_dict())
-        b.generate_states()
         print("States:")
-        for l in b.generate_states():
+        for l in b.generate_states(State.create_from_dict(b.white)):
             print(l)
         
         paths = searcher.find_paths(b)

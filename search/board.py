@@ -23,7 +23,6 @@ class Board:
         """ Initialises and empty Board """
         self.black = dict()
         self.white = dict()
-        self.state = None
 
     def height_at(self, p, color=None):
         """ Returns the height of the stack at the given position, or 0 if no 
@@ -221,18 +220,20 @@ class Board:
                     b.white[(x, y)] = height
         return b
 
-    def generate_states(self):
-        """ Creates a list of State objects reachable from the current stored State
+    def generate_states(self, state):
+        """ Creates a list of State objects reachable from the given state 
+            on this board
+
+            Args:
+                state: a state object
 
             Returns:
                 A list of State objects
         """
-        if self.state is None:
-            self.state = State.create_from_dict(self.white)
         states = []
-        for c, h in self.white.items():
+        for c, h in state.white.items():
             for t, n in self.possible_moves(c, h):
-                states.append(self.state.change_state(c, t, n))
+                states.append(state.change_state(c, t, n))
         return states
 
 if __name__ == "__main__":

@@ -1,7 +1,3 @@
-from collections import defaultdict as dd
-from collections import namedtuple
-import json
-import itertools
 from math import ceil
 
 BLACK = 'b'
@@ -61,7 +57,7 @@ class State:
 
 def stack_l1_norm_cost(p, h, goals):
     #TODO: is this the best place for this function?
-    return min( sum(  ceil( abs(x - y) / h)  for x, y in zip(p, g)) for g in goals) 
+    return min(sum(ceil( abs(x - y) / h)  for x, y in zip(p, g)) for g in goals) 
 
 if __name__ == "__main__":
-    print("noice")
+    pass
