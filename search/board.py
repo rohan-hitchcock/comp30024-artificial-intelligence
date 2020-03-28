@@ -68,43 +68,6 @@ class Board:
             stacks = self.white if color == WHITE else self.black
         yield from stacks
 
-    def merge_stacks(self, pos1, pos2, color=WHITE):
-        """ A function handling the stacking of two stacks, pos1 onto pos2
-
-            Args:
-                pos1: The position of the stack moving
-                pos2: The position of the stack being stacked upon
-                color: (optional) set to BLACK or WHITE to specify the color of
-                the stacks being merged
-        """
-        if color == WHITE:
-            self.white[pos2] = self.height_at(pos2, WHITE) + self.white.pop(pos1, 0)
-        else:
-            self.black[pos2] = self.height_at(pos2, BLACK) + self.black.pop(pos1, 0)
-
-    def unmerge_stacks(self, pos1, color=WHITE):
-        if color == WHITE:
-            self.white[pos1] = self.height_at(pos1, WHITE) - 1
-        else:
-            self.black[pos1] = self.height_at(pos1, BLACK) - 1
-
-    def move(self, pos1, pos2, height, color=WHITE):
-        if self.height_at(pos1) == height:
-            if color == WHITE:
-                self.white[pos2] = self.white.pop(pos1, 0)
-            else:
-                self.black[pos2] = self.black.pop(pos1, 0)
-        elif 0 < height < self.height_at(pos1):
-            if color == WHITE:
-                self.white[pos2] = height
-                self.white[pos1] = self.white[pos1]-height
-            else:
-                self.black[pos2] = height
-                self.black[pos1] = self.black[pos1] - height
-        else:
-            print("BIG NO MATE")
-
-
     def as_string(self, p):
         if self.height_at(p, color=BLACK) > 0:
             return BLACK + str(self.black[p])
@@ -161,27 +124,6 @@ class Board:
                 stack at wp
         """
         wpx, wpy = wp
-
-        # tests whether a generated position e is a valid move from s
-        valid = lambda s, e: Board.is_valid_position(e) and (s != e) and (e not in self.black)
-
-        return itertools.chain(
-            ((x, wpy) for x in range(wpx - h, wpx + h + 1) if valid(wp, (x, wpy))),
-            ((wpx, y) for y in range(wpy - h, wpy + h + 1) if valid(wp, (wpx, y)))
-        )
-
-    def possible_moves_new(self, wp):
-        """ Generates all moves possible for a given white position wp.
-
-            Args:
-                wp: the coordinate of a white stac
-
-            Yields:
-                positions on this board which are a valid move for a white
-                stack at wp
-        """
-        wpx, wpy = wp
-        h = self.height_at(wp)
 
         # tests whether a generated position e is a valid move from s
         valid = lambda s, e: Board.is_valid_position(e) and (s != e) and (e not in self.black)
