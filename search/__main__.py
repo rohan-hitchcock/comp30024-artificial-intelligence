@@ -29,7 +29,6 @@ def main():
 
         print("Board:")
         util.print_board(b.get_print_dict())
-
         
         paths = searcher.find_paths(b)
 

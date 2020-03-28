@@ -24,12 +24,12 @@ class Board:
         self.white = dict()
 
     def height_at(self, p, color=None):
-        """ Returns the height of the stack at the given position, or 0 if no 
+        """ Returns the height of the stack at the given position, or 0 if no
             stack exists.
 
             Args:
                 p: a valid board position
-                color: (optional) if set to either BLACK or WHITE only checks 
+                color: (optional) if set to either BLACK or WHITE only checks
                 for stacks of the selected color
 
             Returns:
@@ -58,7 +58,7 @@ class Board:
             Args:
                 color: (optional) set to BLACK or WHITE to only get positions
                 of the selected color
-            
+
             Yields:
                 Board positions p for which self.height_at(p, color) is not 0
         """
@@ -97,13 +97,12 @@ class Board:
         elif 0 < height < self.height_at(pos1):
             if color == WHITE:
                 self.white[pos2] = height
-                self.white[pos1] = self.white[pos1]-height
+                self.white[pos1] = self.white[pos1] - height
             else:
                 self.black[pos2] = height
                 self.black[pos1] = self.black[pos1] - height
         else:
             print("BIG NO MATE")
-
 
     def as_string(self, p):
         if self.height_at(p, color=BLACK) > 0:
@@ -117,17 +116,17 @@ class Board:
         return {p: self.as_string(p) for p in Board.positions()}
 
     def components(self, color=None):
-        """ Finds the groups of stacks in the same 'explosion component', that 
-            a group of stacks which will explode if any member in the group 
+        """ Finds the groups of stacks in the same 'explosion component', that
+            a group of stacks which will explode if any member in the group
             explodes.
 
             Args:
-                color: (optional) set WHITE or BLACK to only look at tokens of 
+                color: (optional) set WHITE or BLACK to only look at tokens of
                 a particular color
 
             Returns:
-                A list of disjoint sets, where each set contains the positions 
-                of stacks which will explode if any other member of the stack 
+                A list of disjoint sets, where each set contains the positions
+                of stacks which will explode if any other member of the stack
                 explodes.
         """
         ungrouped_stacks = set(self.stack_positions(color=color))
@@ -157,7 +156,7 @@ class Board:
                 h: the height of wp
 
             Yields:
-                positions on this board which are a valid move for a white 
+                positions on this board which are a valid move for a white
                 stack at wp
         """
         wpx, wpy = wp
