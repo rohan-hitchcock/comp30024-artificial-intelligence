@@ -241,7 +241,7 @@ if __name__ == "__main__":
         #util.print_board(print_dict)
 
         for white_stack in board.stack_positions(color=WHITE):
-            print(f"{white_stack} can move to {list(board.possible_moves(white_stack), board.height_at(white_stack))}")
+            print(f"{white_stack} can move to {list(board.possible_moves(white_stack, board.height_at(white_stack)))}")
         
 
         

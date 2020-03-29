@@ -2,6 +2,7 @@ import heapq
 from collections import defaultdict as dd
 import search.board as bd
 import itertools
+from math import ceil
 
 
 class PriorityNode:
@@ -32,7 +33,7 @@ class PriorityNode:
     def __le__(self, other):
         return self == other or self < other
 
-def a_star(start, goals, cost_to_goal, expand_node):
+def a_star(start, goals, cost_to_goal, expand_node, edge_weight):
     """ The world-famous A* algorithm. Note it is generic and does not assume 
         anything about what a node is.
     
@@ -72,7 +73,7 @@ def a_star(start, goals, cost_to_goal, expand_node):
                 if cost[neighbor] == float("inf"):
                     open_nodes.append(PriorityNode(neighbor))
 
-                cost[neighbor] = 1 + cost[curr_node]
+                cost[neighbor] = edge_weight(curr_node, neighbor) + cost[curr_node]
                 priority[neighbor] = cost[neighbor] + cost_to_goal(neighbor, goals)
                 prev_node[neighbor] = curr_node
 
@@ -90,7 +91,7 @@ def find_paths(board):
     for white_stack, goal in itertools.product(board.white, goal_states):
 
         expander = lambda p : board.possible_moves(p, board.height_at(white_stack))
-        path_to_goal = a_star(white_stack, goal, l1_norm_cost, expander)
+        path_to_goal = a_star(white_stack, goal, l1_norm_cost, expander, lambda x : 1)
 
         if path_to_goal is not None:
             poss_paths[(white_stack, path_to_goal[-1])] = path_to_goal
@@ -206,7 +207,17 @@ def l1_norm_cost(p, goals):
         Returns:
             The minimum distance of p to any point in goals
     """
-    return min(sum(abs(x - y) for x, y in zip(p, g)) for g in goals)
+    return min(sum(abs(x - y))  for x, y in zip(p, g) for g in goals)
+
+def stack_l1_norm_cost(p, h, goals):
+
+    return min( sum(  ceil( abs(x - y) / h)  for x, y in zip(p, g)) for g in goals)
+
+def estimate_cost(white_stacks, goal_sets):
+    cost_estimate = 0
+    for g in goals:
+        cost_estimate += min(stack_l1_norm_cost(s, h, g) for s, h  in white_stacks.values())
+    return cost_estimate
 
 if __name__ == "__main__":
 
@@ -214,5 +225,5 @@ if __name__ == "__main__":
 
     start = (0, 0)
 
-    for n in a_star(start, goals, l1_norm_cost, expand_free):
+    for n in a_star(start, goals, l1_norm_cost, expand_free, lambda x : 1):
         print(n)
