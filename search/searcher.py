@@ -5,6 +5,7 @@ import itertools
 from search.state import State
 
 
+
 class PriorityNode:
     """ This class is used to encode priority information about a node (anything).
         It allows custom implementation of a 'comparable' interface (in Java
@@ -32,9 +33,9 @@ class PriorityNode:
     def __le__(self, other):
         return self == other or self < other
 
-
 def a_star(start, goals, cost_to_goal, expand_node, goal_reached):
     """ The world-famous A* algorithm. Note it is generic and does not assume
+
         anything about what a node is.
 
         Args:
@@ -79,7 +80,7 @@ def a_star(start, goals, cost_to_goal, expand_node, goal_reached):
                 if cost[neighbor] == float("inf"):
                     open_nodes.append(PriorityNode(neighbor))
 
-                cost[neighbor] = 1 + cost[curr_node]
+                cost[neighbor] = edge_weight(curr_node, neighbor) + cost[curr_node]
                 priority[neighbor] = cost[neighbor] + cost_to_goal(neighbor, goals)
                 prev_node[neighbor] = curr_node
 
@@ -98,7 +99,6 @@ def find_paths(board):
     poss_paths = dict()
     for white_stack, goal in itertools.product(board.white, goal_states):
         
-
         expander = lambda p : (e[0] for e in board.possible_moves(p, board.height_at(white_stack)))
         
         path_to_goal = a_star(white_stack, goal, l1_norm_cost, expander, set.__contains__)
@@ -215,7 +215,17 @@ def l1_norm_cost(p, goals):
         Returns:
             The minimum distance of p to any point in goals
     """
-    return min(sum(abs(x - y) for x, y in zip(p, g)) for g in goals)
+    return min(sum(abs(x - y))  for x, y in zip(p, g) for g in goals)
+
+def stack_l1_norm_cost(p, h, goals):
+
+    return min( sum(  ceil( abs(x - y) / h)  for x, y in zip(p, g)) for g in goals)
+
+def estimate_cost(white_stacks, goal_sets):
+    cost_estimate = 0
+    for g in goals:
+        cost_estimate += min(stack_l1_norm_cost(s, h, g) for s, h  in white_stacks.values())
+    return cost_estimate
 
 def all_goals_reached(goals, state):
     for g in goals:
