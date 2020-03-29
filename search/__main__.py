@@ -28,17 +28,27 @@ def main():
     with open(sys.argv[1]) as file:
         b = bd.Board.create_from_json(file)
 
-        print("Board:")
-        util.print_board(b.get_print_dict())
-        print("States:")
-        for l in b.generate_states(State.create_from_dict(b.white)):
-            print(l)
+    print("Board:")
+    util.print_board(b.get_print_dict())
+        # print("States:")
+        # goals = searcher.generate_goal_states(b)
+        # for l in b.generate_states(State.create_from_dict(b.white, b.black, goals)):
+        #     print(l)
         
-        paths = searcher.find_paths(b)
+        # paths = searcher.find_paths(b)
 
-        print("\nall paths:")
-        for w, p in paths.items():
-            print(f"{w} follows {p}")
+        # print("\nall paths:")
+        # for w, p in paths.items():
+        #     print(f"{w} follows {p}")
+
+    state_seq = None
+    state_seq = searcher.whole_board_search(b)
+    if state_seq is None:
+        print("No path found.")
+    else:
+        print("State sequence: ")
+        for s in state_seq:
+            print(s)
 
 
 if __name__ == '__main__':

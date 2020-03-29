@@ -2,7 +2,6 @@ from collections import defaultdict as dd
 from collections import namedtuple
 import json
 import itertools
-from search.state import State
 
 BLACK = 'b'
 WHITE = 'w'
@@ -113,21 +112,23 @@ class Board:
             ungrouped_stacks -= component
         return compontents
 
-    def possible_moves(self, wp, h):
+
+    def possible_moves_new(self, wp, h, blacks):
         """ Generates all moves possible for a given white position wp.
 
             Args:
                 wp: the coordinate of a white stack
                 h: the height of wp
+                blacks: the dictionary of black stacks belonging to the state
 
             Yields:
                 positions on this board which are a valid move for a white
                 stack at wp
-        """ 
+        """
         wpx, wpy = wp
 
         # tests whether a generated position e is a valid move from s
-        valid = lambda s, e: Board.is_valid_position(e) and (s != e) and (e not in self.black)
+        valid = lambda s, e: Board.is_valid_position(e) and (s != e) and (e not in blacks)
 
         moves = []
         for n in range(1, h + 1):
@@ -138,6 +139,7 @@ class Board:
                 if valid(wp, (wpx, y)):
                     moves.append(((wpx, y), n))
 
+        """ added this line, basically just adds another move (of nothing) which state generator picks up """
         moves.append(((wpx, wpy), h))
 
         return moves
@@ -234,8 +236,10 @@ class Board:
         """
         states = []
         for c, h in state.white.items():
-            for t, n in self.possible_moves(c, h):
-                states.append(state.change_state(c, t, n))
+            for t, n in self.possible_moves_new(c, h, state.black):
+                meow = state.change_state(c, t, n)
+                if meow != state:
+                    states.append(meow)
         return states
 
 if __name__ == "__main__":
