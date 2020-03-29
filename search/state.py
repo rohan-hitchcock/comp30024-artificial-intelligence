@@ -23,6 +23,12 @@ class State:
     def __repr__(self):
         return f"{type(self).__name__}.{type(self).create_from_dict.__name__}({str(self)})"
 
+    def __hash__(self):
+        return hash(tuple(self.white.items()))
+
+    def __eq__(self, other):
+        return self.white == other.white
+
     def get_state(self):
         return self.white.copy()
 
@@ -52,7 +58,7 @@ class State:
     def estimate_cost(self, goal_sets):
         cost_estimate = 0
         for g in goal_sets:
-            cost_estimate += min(stack_l1_norm_cost(s, h, g) for s, h in self.white.values())
+            cost_estimate += min(stack_l1_norm_cost(s, h, g) for s, h in self.white.items())
         return cost_estimate
 
 def stack_l1_norm_cost(p, h, goals):
@@ -60,4 +66,23 @@ def stack_l1_norm_cost(p, h, goals):
     return min(sum(ceil( abs(x - y) / h)  for x, y in zip(p, g)) for g in goals) 
 
 if __name__ == "__main__":
-    pass
+    s1 = State()
+    s2 = State.create_from_dict({(0, 1): 10})
+
+    print(f"hash(s1) == {hash(s1)}")
+    print(f"hash(str(s1)) == {hash(str(s1))}")
+    print(f"hash(repr(s1)) == {hash(repr(s1))}")
+    print()
+    print(f"hash(s2) == {hash(s2)}")
+    print(f"hash(str(s2)) == {hash(str(s2))}")
+    print(f"hash(repr(s2)) == {hash(repr(s2))}")
+
+
+    class Test:
+        def __init__(self):
+            pass
+
+    s = Test()
+    t = Test()
+    print(hash(s))
+    print(hash(t))

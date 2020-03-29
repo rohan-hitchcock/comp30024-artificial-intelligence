@@ -2,6 +2,7 @@ import heapq
 from collections import defaultdict as dd
 import search.board as bd
 import itertools
+from search.state import State
 
 
 class PriorityNode:
@@ -32,7 +33,7 @@ class PriorityNode:
         return self == other or self < other
 
 
-def a_star(start, goals, cost_to_goal, expand_node):
+def a_star(start, goals, cost_to_goal, expand_node, goal_reached):
     """ The world-famous A* algorithm. Note it is generic and does not assume
         anything about what a node is.
 
@@ -55,13 +56,20 @@ def a_star(start, goals, cost_to_goal, expand_node):
     cost = dd(lambda: float("inf"))
     cost[start] = 0
     priority = {start: cost_to_goal(start, goals)}
-
+    
     PriorityNode.__lt__ = lambda x, y: priority[x.node] < priority[y.node]
 
+    
+
     while open_nodes:
+    
+        
+
         curr_node = heapq.heappop(open_nodes).node
 
-        if curr_node in goals:
+    
+
+        if goal_reached(goals, curr_node):
             return path_to(curr_node, prev_node)
 
         heap_changed = False
@@ -79,6 +87,7 @@ def a_star(start, goals, cost_to_goal, expand_node):
 
         if heap_changed:
             heapq.heapify(open_nodes)
+
     return None
 
 
@@ -92,7 +101,7 @@ def find_paths(board):
 
         expander = lambda p : (e[0] for e in board.possible_moves(p, board.height_at(white_stack)))
         
-        path_to_goal = a_star(white_stack, goal, l1_norm_cost, expander)
+        path_to_goal = a_star(white_stack, goal, l1_norm_cost, expander, set.__contains__)
 
         if path_to_goal is not None:
             poss_paths[(white_stack, path_to_goal[-1])] = path_to_goal
@@ -105,7 +114,7 @@ def find_paths(board):
             print(g)
 
         white_stack, goal = min(poss_paths, key=lambda k: len(poss_paths.get(k)))
-
+    
         for i, goal_set in enumerate(goal_states):
             if goal in goal_set:
                 break
@@ -119,11 +128,12 @@ def find_paths(board):
         for ws, g in list(poss_paths.keys()):
             if ws == white_stack or g in achieved_goal:
                 del poss_paths[(ws, g)]
+    
+        break
 
     if goal_states:
         print(f"\nWARNING: {len(goal_states)} goal(s) not achieved.")
     return paths
-
 
 def generate_goal_states(board):
     """ Generates a list of disjoint sets of goal positions, given a board. This
@@ -207,12 +217,29 @@ def l1_norm_cost(p, goals):
     """
     return min(sum(abs(x - y) for x, y in zip(p, g)) for g in goals)
 
+def all_goals_reached(goals, state):
+    for g in goals:
+    
+        if not any(pos in g for pos in state.white):
+            return False 
+    return True
+
+        
+
+#TODO: rename function 
+def whole_board_search(board):
+    
+
+    start = State.create_from_dict(board.white)
+    goals = generate_goal_states(board)
+
+    print(f"goals: {goals}")
+
+    cost_heuristic = State.estimate_cost
+    expander = board.generate_states
+    goal_reached = all_goals_reached
+
+    return a_star(start, goals, cost_heuristic, expander, goal_reached)
 
 if __name__ == "__main__":
-
-    goals = {(1, 10), (11, 3)}
-
-    start = (0, 0)
-
-    for n in a_star(start, goals, l1_norm_cost, expand_free):
-        print(n)
+    pass
