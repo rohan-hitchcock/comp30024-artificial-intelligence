@@ -2,7 +2,6 @@ from collections import defaultdict as dd
 from collections import namedtuple
 import json
 import itertools
-from search.state import State
 
 BLACK = 'b'
 WHITE = 'w'
@@ -25,12 +24,12 @@ class Board:
         self.white = dict()
 
     def height_at(self, p, color=None):
-        """ Returns the height of the stack at the given position, or 0 if no 
+        """ Returns the height of the stack at the given position, or 0 if no
             stack exists.
 
             Args:
                 p: a valid board position
-                color: (optional) if set to either BLACK or WHITE only checks 
+                color: (optional) if set to either BLACK or WHITE only checks
                 for stacks of the selected color
 
             Returns:
@@ -59,7 +58,7 @@ class Board:
             Args:
                 color: (optional) set to BLACK or WHITE to only get positions
                 of the selected color
-            
+
             Yields:
                 Board positions p for which self.height_at(p, color) is not 0
         """
@@ -68,6 +67,42 @@ class Board:
         else:
             stacks = self.white if color == WHITE else self.black
         yield from stacks
+
+    def merge_stacks(self, pos1, pos2, color=WHITE):
+        """ A function handling the stacking of two stacks, pos1 onto pos2
+
+            Args:
+                pos1: The position of the stack moving
+                pos2: The position of the stack being stacked upon
+                color: (optional) set to BLACK or WHITE to specify the color of
+                the stacks being merged
+        """
+        if color == WHITE:
+            self.white[pos2] = self.height_at(pos2, WHITE) + self.white.pop(pos1, 0)
+        else:
+            self.black[pos2] = self.height_at(pos2, BLACK) + self.black.pop(pos1, 0)
+
+    def unmerge_stacks(self, pos1, color=WHITE):
+        if color == WHITE:
+            self.white[pos1] = self.height_at(pos1, WHITE) - 1
+        else:
+            self.black[pos1] = self.height_at(pos1, BLACK) - 1
+
+    def move(self, pos1, pos2, height, color=WHITE):
+        if self.height_at(pos1) == height:
+            if color == WHITE:
+                self.white[pos2] = self.white.pop(pos1, 0)
+            else:
+                self.black[pos2] = self.black.pop(pos1, 0)
+        elif 0 < height < self.height_at(pos1):
+            if color == WHITE:
+                self.white[pos2] = height
+                self.white[pos1] = self.white[pos1] - height
+            else:
+                self.black[pos2] = height
+                self.black[pos1] = self.black[pos1] - height
+        else:
+            print("BIG NO MATE")
 
     def as_string(self, p):
         if self.height_at(p, color=BLACK) > 0:
@@ -81,17 +116,17 @@ class Board:
         return {p: self.as_string(p) for p in Board.positions()}
 
     def components(self, color=None):
-        """ Finds the groups of stacks in the same 'explosion component', that 
-            a group of stacks which will explode if any member in the group 
+        """ Finds the groups of stacks in the same 'explosion component', that
+            a group of stacks which will explode if any member in the group
             explodes.
 
             Args:
-                color: (optional) set WHITE or BLACK to only look at tokens of 
+                color: (optional) set WHITE or BLACK to only look at tokens of
                 a particular color
 
             Returns:
-                A list of disjoint sets, where each set contains the positions 
-                of stacks which will explode if any other member of the stack 
+                A list of disjoint sets, where each set contains the positions
+                of stacks which will explode if any other member of the stack
                 explodes.
         """
         ungrouped_stacks = set(self.stack_positions(color=color))
@@ -123,22 +158,37 @@ class Board:
             Yields:
                 positions on this board which are a valid move for a white
                 stack at wp
-        """ 
+        """
         wpx, wpy = wp
 
         # tests whether a generated position e is a valid move from s
         valid = lambda s, e: Board.is_valid_position(e) and (s != e) and (e not in self.black)
 
-        moves = []
-        for n in range(1, h + 1):
-            for x in range(wpx - h, wpx + h + 1):
-                if valid(wp, (x, wpy)):
-                    moves.append(((x, wpy), n))
-            for y in range(wpy - h, wpy + h + 1):
-                if valid(wp, (wpx, y)):
-                    moves.append(((wpx, y), n))
+        return itertools.chain(
+            ((x, wpy) for x in range(wpx - h, wpx + h + 1) if valid(wp, (x, wpy))),
+            ((wpx, y) for y in range(wpy - h, wpy + h + 1) if valid(wp, (wpx, y)))
+        )
 
-        return moves
+    def possible_moves_new(self, wp):
+        """ Generates all moves possible for a given white position wp.
+
+            Args:
+                wp: the coordinate of a white stac
+
+            Yields:
+                positions on this board which are a valid move for a white
+                stack at wp
+        """
+        wpx, wpy = wp
+        h = self.height_at(wp)
+
+        # tests whether a generated position e is a valid move from s
+        valid = lambda s, e: Board.is_valid_position(e) and (s != e) and (e not in self.black)
+
+        return itertools.chain(
+            ((x, wpy) for x in range(wpx - h, wpx + h + 1) if valid(wp, (x, wpy))),
+            ((wpx, y) for y in range(wpy - h, wpy + h + 1) if valid(wp, (wpx, y)))
+        )
 
     @staticmethod
     def positions():
@@ -220,21 +270,6 @@ class Board:
                     b.white[(x, y)] = height
         return b
 
-    def generate_states(self, state):
-        """ Creates a list of State objects reachable from the given state 
-            on this board
-
-            Args:
-                state: a state object
-
-            Returns:
-                A list of State objects
-        """
-        states = []
-        for c, h in state.white.items():
-            for t, n in self.possible_moves(c, h):
-                states.append(state.change_state(c, t, n))
-        return states
 
 if __name__ == "__main__":
 
@@ -263,7 +298,7 @@ if __name__ == "__main__":
         # util.print_board(print_dict)
 
         for white_stack in board.stack_positions(color=WHITE):
-            print(f"{white_stack} can move to {list(board.possible_moves(white_stack, board.height_at(white_stack)))}")
+            print(f"{white_stack} can move to {list(board.possible_moves(white_stack), board.height_at(white_stack))}")
 
         for i, x in enumerate(board.intersecting_radii(color=BLACK)):
 
