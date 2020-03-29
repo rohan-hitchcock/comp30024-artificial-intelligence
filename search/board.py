@@ -138,6 +138,8 @@ class Board:
                 if valid(wp, (wpx, y)):
                     moves.append(((wpx, y), n))
 
+        moves.append(((wpx, wpy), h))
+
         return moves
 
     @staticmethod
