@@ -64,8 +64,8 @@ def a_star(start, goals, cost_to_goal, expand_node, goal_reached):
 
     while open_nodes:
     
+        #print(len(open_nodes))
         
-
         curr_node = heapq.heappop(open_nodes).node
 
     
@@ -80,7 +80,7 @@ def a_star(start, goals, cost_to_goal, expand_node, goal_reached):
                 if cost[neighbor] == float("inf"):
                     open_nodes.append(PriorityNode(neighbor))
 
-                cost[neighbor] = edge_weight(curr_node, neighbor) + cost[curr_node]
+                cost[neighbor] = 1 + cost[curr_node]
                 priority[neighbor] = cost[neighbor] + cost_to_goal(neighbor, goals)
                 prev_node[neighbor] = curr_node
 
