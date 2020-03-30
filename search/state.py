@@ -28,7 +28,11 @@ class State:
         return f"{type(self).__name__}.{type(self).create_from_dict.__name__}({str(self)}, {str(self.black)}, {str(self.goals)})"
 
     def __hash__(self):
-        return hash(tuple(self.white.items()) + tuple(self.black.items()) + tuple(str(self.goals)))
+        return hash(
+            tuple(self.white.items()) + 
+            tuple(self.black.items()) + 
+            tuple(self.goals)
+        )
 
     def __eq__(self, other):
         return self.white == other.white and self.black == other.black and self.goals == other.goals
@@ -115,7 +119,7 @@ class State:
 
         s.white = white.copy()
         s.black = black.copy()
-        s.goals = goals.copy()
+        s.goals = [frozenset(g) for g in goals]
         return s
 
     def estimate_cost(self):

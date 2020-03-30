@@ -67,17 +67,27 @@ def a_star(start, goals, cost_to_goal, expand_node, goal_reached):
 
         """ same here, goal_reached checks the goals belonging to its own state """
         if goal_reached(curr_node):
+            print(len(open_nodes))
             return path_to(curr_node, prev_node)
 
         heap_changed = False
         for neighbor in expand_node(curr_node):
             if cost[neighbor] > cost[curr_node] + 1:
+                
+                neighbor_to_goal_cost = cost_to_goal(neighbor)
+
+                """
+                if neighbor_to_goal_cost == 10000000000:
+                    cost[neighbor] = 1 + cost[curr_node]
+                    continue
+                """
+
 
                 if cost[neighbor] == float("inf"):
                     open_nodes.append(PriorityNode(neighbor))
 
                 cost[neighbor] = 1 + cost[curr_node]
-                priority[neighbor] = cost[neighbor] + cost_to_goal(neighbor)
+                priority[neighbor] = cost[neighbor] + neighbor_to_goal_cost
                 prev_node[neighbor] = curr_node
 
                 heap_changed = True
