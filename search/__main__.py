@@ -2,7 +2,6 @@ import sys
 import json
 from collections import defaultdict as dd
 
-import search.board as bd
 from search import util
 from search import searcher
 from search.state import State
@@ -26,7 +25,7 @@ def get_labeled_print(components):
 
 def main():
     with open(sys.argv[1]) as file:
-        b = bd.Board.create_from_json(file)
+        b = State.create_from_json(file)
     
     print("Board:")
     util.print_board(b.get_print_dict())
@@ -51,7 +50,10 @@ def main():
     else:
         print("State sequence: ")
         for s in state_seq:
-            print(s)
+            print(s.created_from)
+        for w in state_seq[-1].white.keys():
+            print(State.boom_string(w))
+
 
 
 if __name__ == '__main__':
