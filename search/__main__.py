@@ -20,13 +20,23 @@ def get_labeled_print(components):
                 print_dict[pos] += str(component_id)
 
     return print_dict
-    
+
+
+def decide_print(move):
+    pos1, pos2, h = move
+    if pos1 == pos2:
+        x, y = pos1
+        util.print_boom(x, y)
+    else:
+        x1, y1 = pos1
+        x2, y2 = pos2
+        util.print_move(h, x1, y1, x2, y2)
 
 
 def main():
     with open(sys.argv[1]) as file:
         b = State.create_from_json(file)
-    
+
     print("Board:")
     util.print_board(b.get_print_dict())
 
@@ -49,11 +59,11 @@ def main():
         print("No path found.")
     else:
         print("State sequence: ")
-        for s in state_seq:
-            print(s.created_from)
+        for s in state_seq[1:]:
+            decide_print(s.created_from)
         for w in state_seq[-1].white.keys():
-            print(State.boom_string(w))
-
+            x, y = w
+            util.print_boom(x, y)
 
 
 if __name__ == '__main__':

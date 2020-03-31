@@ -21,7 +21,7 @@ class State:
         self.white = dict()
         self.black = dict()
         self.goals = list()
-        self.created_from = "# Start"
+        self.created_from = tuple()
 
     def __str__(self):
         return str(self.white)
@@ -134,16 +134,6 @@ class State:
             ungrouped_stacks -= component
         return components
 
-    @staticmethod
-    def move_string(pos1, pos2, h):
-        x1, y1 = pos1
-        x2, y2 = pos2
-        return "MOVE {} from {} to {}.".format(h, (x1, y1), (x2, y2))
-
-    @staticmethod
-    def boom_string(pos1):
-        x, y = pos1
-        return "BOOM at {}.".format((x, y))
 
     def change_state(self, pos1, pos2, h):
         new_state_dict = self.white.copy()
@@ -166,7 +156,7 @@ class State:
                                     new_state_dict.pop(w)
                     new_goals.remove(g)
                     new_state_dict.pop(pos1)
-                    return State.create_from_dict(new_state_dict, new_black, new_goals, State.boom_string(pos1))
+                    return State.create_from_dict(new_state_dict, new_black, new_goals, (pos1, pos2, h))
 
         if self.white[pos1] == h:
             new_state_dict.pop(pos1)
@@ -178,7 +168,7 @@ class State:
         else:
             new_state_dict[pos2] = h
 
-        return State.create_from_dict(new_state_dict, self.black, self.goals, State.move_string(pos1, pos2, h))
+        return State.create_from_dict(new_state_dict, self.black, self.goals, (pos1, pos2, h))
 
     def possible_moves(self, wp):
         """ Generates all moves possible for a given white position wp.
@@ -289,9 +279,9 @@ class State:
             x, y = p
             yield from (
                 p for p in itertools.product(
-                range(x - EXPL_RAD, x + EXPL_RAD + 1),
-                range(y - EXPL_RAD, y + EXPL_RAD + 1)
-            ) if State.is_valid_position(p)
+                    range(x - EXPL_RAD, x + EXPL_RAD + 1),
+                    range(y - EXPL_RAD, y + EXPL_RAD + 1)
+                ) if State.is_valid_position(p)
             )
 
     @staticmethod
