@@ -1,5 +1,7 @@
 import heapq
 from collections import defaultdict as dd
+from math import ceil
+
 import search.board as bd
 import itertools
 from search.state import State
@@ -36,7 +38,6 @@ class PriorityNode:
 def a_star(start, goals, cost_to_goal, expand_node, goal_reached):
     """ The world-famous A* algorithm. Note it is generic and does not assume
         anything about what a node is.
-
         Args:
             start: the state to start the search from
             goals: a set of goal states
@@ -45,7 +46,6 @@ def a_star(start, goals, cost_to_goal, expand_node, goal_reached):
             which can be cast to a float.
             expand_node: a callable of the form expand_node(node) which returns
             an iterable of next-nodes from node.
-
         Returns:
             A sequence of states starting with `start' and ending with some
             state in `goals' (inclusive of both)
@@ -55,8 +55,10 @@ def a_star(start, goals, cost_to_goal, expand_node, goal_reached):
     prev_node = {start: None}
     cost = dd(lambda: float("inf"))
     cost[start] = 0
-    priority = {start: cost_to_goal(start, goals)}
-    
+
+    """ cost function now just takes state, state considers its own goals"""
+    priority = {start: cost_to_goal(start)}
+
     PriorityNode.__lt__ = lambda x, y: priority[x.node] < priority[y.node]
 
     
@@ -65,22 +67,33 @@ def a_star(start, goals, cost_to_goal, expand_node, goal_reached):
     
         
 
+
+
         curr_node = heapq.heappop(open_nodes).node
 
-    
-
-        if goal_reached(goals, curr_node):
+        """ same here, goal_reached checks the goals belonging to its own state """
+        if goal_reached(curr_node):
+            print(len(open_nodes))
             return path_to(curr_node, prev_node)
 
         heap_changed = False
         for neighbor in expand_node(curr_node):
             if cost[neighbor] > cost[curr_node] + 1:
+                
+                neighbor_to_goal_cost = cost_to_goal(neighbor)
+
+                """
+                if neighbor_to_goal_cost == 10000000000:
+                    cost[neighbor] = 1 + cost[curr_node]
+                    continue
+                """
+
 
                 if cost[neighbor] == float("inf"):
                     open_nodes.append(PriorityNode(neighbor))
 
                 cost[neighbor] = 1 + cost[curr_node]
-                priority[neighbor] = cost[neighbor] + cost_to_goal(neighbor, goals)
+                priority[neighbor] = cost[neighbor] + neighbor_to_goal_cost
                 prev_node[neighbor] = curr_node
 
                 heap_changed = True
@@ -135,12 +148,12 @@ def find_paths(board):
         print(f"\nWARNING: {len(goal_states)} goal(s) not achieved.")
     return paths
 
+
 def generate_goal_states(board):
     """ Generates a list of disjoint sets of goal positions, given a board. This
         can be thought of as a formula in conjunctive normal form, that is at
         least one goal position from each set must be achieved to complete the
         goal.
-
         Args:
             A Board object.
         Returns:
@@ -191,7 +204,6 @@ def expand_free(node):
 
 def path_to(node, prev_node):
     """ Reconstructs the path to node.
-
         Args:
             node: the node the path is to
             prev_node: a dictionary of node predecessors, keyed by node.
@@ -208,14 +220,13 @@ def path_to(node, prev_node):
 
 def l1_norm_cost(p, goals):
     """ Returns the minimum L1-norm distance of p to any point in goals.
-
         Args:
             p: a 2-tuple to calculate the distances from.
             goals: a finite iterable of goal nodes (2-tuples)
         Returns:
             The minimum distance of p to any point in goals
     """
-    return min(sum(abs(x - y) for x, y in zip(p, g)) for g in goals)
+    return min(sum(abs(x - y)) for x, y in zip(p, g) for g in goals)
 
 def all_goals_reached(goals, state):
     for g in goals:
@@ -224,14 +235,10 @@ def all_goals_reached(goals, state):
             return False 
     return True
 
-        
-
-#TODO: rename function 
+# TODO: rename function
 def whole_board_search(board):
-    
-
-    start = State.create_from_dict(board.white)
     goals = generate_goal_states(board)
+    start = State.create_from_dict(board.white, board.black, goals)
 
     print(f"goals: {goals}")
 
@@ -243,3 +250,4 @@ def whole_board_search(board):
 
 if __name__ == "__main__":
     pass
+

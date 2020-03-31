@@ -44,12 +44,9 @@ def main():
 
     print("\n\n\nNEW: _____________________________________________")
     """
-
-    
-
     state_seq = None
     state_seq = searcher.whole_board_search(b)
-    if state_seq is None: 
+    if state_seq is None:
         print("No path found.")
     else:
         print("State sequence: ")
