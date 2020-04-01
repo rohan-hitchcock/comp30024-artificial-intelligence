@@ -30,20 +30,14 @@ class State:
         return f"{type(self).__name__}.{type(self).create_from_dict.__name__}({str(self)}, {str(self.black)}, {str(self.goals)})"
 
     def __hash__(self):
-        return hash(
-            tuple(self.white.items()) +
-            tuple(self.black.items()) +
+        return hash((
+            tuple(self.white.items()), 
+            tuple(self.black.items()), 
             tuple(self.goals)
-        )
-
+        ))
+        
     def __eq__(self, other):
         return self.white == other.white and self.black == other.black and self.goals == other.goals
-
-    def __hash__(self):
-        return hash(tuple(self.white.items()))
-
-    def __eq__(self, other):
-        return self.white == other.white
 
     def height_at(self, p, color=None):
         """ Returns the height of the stack at the given position, or 0 if no
@@ -210,11 +204,9 @@ class State:
             Returns:
                 A list of sets of goal positions.
         """
-        explosion_radii = [set(self.explosion_radius(c)) for c in self.components(color=BLACK)]
-        sum = 0
-        for h in self.white.values():
-            sum += h
-        if sum < len(explosion_radii):
+        explosion_radii = [frozenset(self.explosion_radius(c)) for c in self.components(color=BLACK)]
+        
+        if sum(self.white.values()) < len(explosion_radii):
             self.goals = State.intersecting_radii(explosion_radii)
         else:
             self.goals = explosion_radii
@@ -252,7 +244,7 @@ class State:
 
         s.white = white.copy()
         s.black = black.copy()
-        s.goals = [frozenset(g) for g in goals]
+        s.goals = goals
         s.created_from = move
         return s
 
