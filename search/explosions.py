@@ -1,8 +1,4 @@
-import itertools
-
-EXPL_RAD = 1
-
-BOARD_LENGTH = 8
+from search import board
 
 class ExplosionComponent:
     #TODO: explain this class
@@ -37,7 +33,7 @@ class ExplosionComponent:
 
                 s = to_visit.pop()
                 for n in ungrouped:
-                    if in_explosion_radius(s, n) and (n not in component):
+                    if board.in_explosion_radius(s, n) and (n not in component):
                         to_visit.add(n)
 
                 component.add(s)
@@ -56,7 +52,7 @@ class ExplosionComponent:
     def component_radii():
         assert ExplosionComponent is not None, "Not initialized."
         #pylint:disable=not-an-iterable
-        return frozenset(explosion_radii(c) for c in ExplosionComponent._components)
+        return frozenset(board.explosion_radii(c) for c in ExplosionComponent._components)
 
     @staticmethod
     def component_radii_intersections():
@@ -99,52 +95,3 @@ class ExplosionComponent:
     @staticmethod
     def get():
         return ExplosionComponent._components
-
-#*******************************************************************************
-
-def explosion_radii(ps):
-    #TODO: fix docstring
-    """ Iterates over the points inside an explosion centered on p
-
-        Args:
-            ps: An iterable of valid board positions
-
-        Yields:
-            Valid board positions in the explosion radius of ps
-    """
-    r = set()
-    for p in ps:
-        r.update(explosion_radius(p))
-    return frozenset(r)
-
-def explosion_radius(pos):
-    x, y = pos
-
-    possible = itertools.product(
-        range(x - EXPL_RAD, x + EXPL_RAD + 1),
-        range(y - EXPL_RAD, y + EXPL_RAD + 1)
-    )
-
-    return (p for p in possible if is_valid_position(p))
-
-def in_explosion_radius(p1, p2):
-        """ Checks whether two positions are in the same explosion radius
-
-            Args:
-                p1, p2: valid board positions
-
-            Returns:
-                True if p1 and p2 are in each-others explosion radius and false
-                otherwise
-        """
-        return all(abs(x - y) <= EXPL_RAD for x, y in zip(p1, p2))
-
-def is_valid_position(p):
-        """ Checks that the provided position is a valid board position
-
-            Args:
-                pos: the position to be checked
-            Returns:
-                A boolean representing if the position is valid or not
-        """
-        return all(0 <= x < BOARD_LENGTH for x in p)

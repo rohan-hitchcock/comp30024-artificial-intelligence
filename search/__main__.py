@@ -71,7 +71,7 @@ def main():
         b = State.create_from_json(file)
 
     print("Board:")
-    util.print_board(b.get_print_dict())
+    util.print_board(b.get_board_dict())
 
     state_seq = searcher.whole_board_search(b)
     if state_seq is None:

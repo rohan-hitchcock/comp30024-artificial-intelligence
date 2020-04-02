@@ -2,9 +2,8 @@ import itertools
 import json
 from collections import namedtuple
 
-from search.explosions import ExplosionComponent, explosion_radius, explosion_radii, is_valid_position
-
-BOARD_LENGTH = 8
+from search.explosions import ExplosionComponent
+from search import board
 
 BLACK = 'b'
 WHITE = 'w'
@@ -12,12 +11,16 @@ WHITE = 'w'
 J_WHITE_NAME = "white"
 J_BLACK_NAME = "black"
 
+#Represents stacks, pos is board position (a 2-tuple) and height an integer
 Stack = namedtuple("Stack", ["pos", "height"])
 
 class State:
+    """ A State is an immutable object describing the state of a board, that is 
+        the white and black stack data. It also stores information about the 
+        current goals in this State, in the context of a search problem"""
 
-    def __init__(self, white, black, goals, move):
-        """ Initializes a state.
+    def __init__(self, white, black, goals):
+        """ Initializes a State. 
 
             Args:
                 white: a frozenset of Stack objects representing white tokens
@@ -28,15 +31,12 @@ class State:
         self.white = white
         self.black = black
         self.goals = goals
-        self.prev_move = move
 
     def __str__(self):
-        #TODO fix this
-        #return f"w: {set(self.white)}\nb: {set(self.black)}\ng: {set(self.goals)}\n"
-        return f"w: {set(self.white)}\nm: {self.prev_move}"
+        return f"w: {set(self.white)}\nb: {set(self.black)}\ng: {set(self.goals)}\n"
 
     def __repr__(self):
-        return f"{type(self).__name__}.{type(self).create_from_dict.__name__}({str(self)}, {str(self.black)}, {str(self.goals)})"
+        return f"{type(self).__name__}({repr(self.white)}, {repr(self.black)}, {repr(self.goals)})"
 
     def __hash__(self):
         return hash((self.white, self.black, self.goals))
@@ -45,14 +45,14 @@ class State:
         return self.white == other.white and self.black == other.black and self.goals == other.goals
 
     def stack_positions(self, color=None):
-        """ An iterator over every board position containing a stack.
+        """ An iterator over every position containing a stack.
 
             Args:
                 color: (optional) set to BLACK or WHITE to only get positions
                 of the selected color
 
             Yields:
-                Board positions p for which self.height_at(p, color) is not 0
+                Board positions (2-tuples) which are the locations of stacks
         """  
         if color is None:
             stacks = itertools.chain(
@@ -67,7 +67,15 @@ class State:
         yield from stacks
         
     def as_string(self, p):
-        
+        """ Gets whatever is at position p (possibly nothing) as a string 
+            suitible for printing on a board.
+            
+            Args:
+                p: a valid board position
+            Returns:
+                A string describing whatever is at position p in this state.
+        """
+
         for b in self.black:
             if p == b.pos:
                 return BLACK + str(b.height)
@@ -77,13 +85,12 @@ class State:
                 return WHITE + str(w.height)
         return "" 
     
-    def get_print_dict(self):
+    def get_board_dict(self):
         """ Returns a dictionary of this board suitible for printing"""
-        return {p: self.as_string(p) for p in State.positions()}
+        return {p: self.as_string(p) for p in board.positions()}
 
     def generate_next_states(self):
-        """ Creates a list of State objects reachable from the
-            current state
+        """ Finds the State objects reachable from the current state
 
             Returns:
                 A list of State objects
@@ -92,34 +99,44 @@ class State:
 
         for white_stack in self.white:
 
-            #check if a boom move is sensible
+            #check if a boom action is sensible
             if any((white_stack.pos in g) for g in self.goals):
                 states.append(self.change_state_boom(white_stack))
             
+            #look for valid move actions
             for pos, num_tokens in self.possible_moves(white_stack):
                 states.append(self.change_state_move(white_stack, pos, num_tokens))
         return states
 
     def change_state_boom(self, stack):
+        """ Generates the State object representing the successor of this state
+            after the specified stack explodes.
+
+            Args:
+                A Stack which is in this state.
+
+            Returns:
+                A State object which is the result of stack exploding thin this
+                State.
+        """
 
         #a component remains on the board if and only if any one of its elements
         #remains on the board
         #pylint: disable=not-an-iterable
         remaining_components = {
-                c: explosion_radii(c) for c in ExplosionComponent.get() 
+                c: board.explosion_radii(c) for c in ExplosionComponent.get() 
                 if any(b.pos in c for b in self.black)
             }
 
         white_to_explode = {stack.pos}
         exploded = set()
-        
         while white_to_explode:
 
             exploder = white_to_explode.pop()
             exploded.add(exploder)
 
             #look at white tokens in the explosion radius radius
-            radius = set(explosion_radius(exploder))
+            radius = set(board.explosion_radius(exploder))
             for w in self.white:
                 if w.pos in radius and w.pos not in exploded:
                     white_to_explode.add(w.pos)
@@ -130,7 +147,7 @@ class State:
                 #the exploder will blow up this component
                 if exploder in remaining_components[c]:
                     
-                    #set all tokens in radius to exploded
+                    #set all tokens in component to exploded
                     exploded.update(c)
 
                     #check for any other white tokens in this radius
@@ -146,10 +163,21 @@ class State:
         new_black = frozenset(b for b in self.black if b.pos not in exploded)
         new_white = frozenset(w for w in self.white if w.pos not in exploded)
         
-        #TODO: is this format for move ok?
-        return State(new_white, new_black, new_goals, stack.pos)
+        return State(new_white, new_black, new_goals)
 
     def change_state_move(self, stack, new_pos, num_tokens):
+        """ Generates the State object which is the result of stack moving 
+            num_tokens to new_pos in this State.
+
+            Args:
+                stack: A Stack in this State
+                new_pos: a valid new position for stack considering the current State
+                num_tokens: a valid number of tokens to move from stack
+
+            Returns:
+                The State object which is the successor of this state after 
+                executing the move described above.
+        """
 
         new_white = self.white.difference([stack])
 
@@ -164,25 +192,24 @@ class State:
         if stack.height > num_tokens:
             new_white |= {Stack(stack.pos, stack.height - num_tokens)}
         
-
-        return State(new_white, self.black, self.goals, (stack.pos, new_pos, num_tokens))
+        return State(new_white, self.black, self.goals)
 
     def possible_moves(self, stack):
-        """ Generates all moves possible for a given white position wp.
+        """ Generates all moves possible for stack in the current State.
 
             Args:
-                wp: the coordinate of a white stack
-                h: the height of wp
+                stack: the stack for which to generate move
 
             Yields:
-                positions on this board which are a valid move for a white
-                stack at wp
+                tuples of the form (pos, n) where pos is a 2-tuple which 
+                represents the position to move stack to and n is the number of
+                tokens to move.
         """
         wpx, wpy = stack.pos
         h = stack.height
         
         # tests whether a generated position e is a valid move from s
-        valid = lambda s, e: is_valid_position(e) and (s != e) and all(e != b.pos for b in self.black)
+        valid = lambda s, e: board.is_valid_position(e) and (s != e) and all(e != b.pos for b in self.black)
 
         moves = []
         for n in range(1, h + 1):
@@ -195,17 +222,16 @@ class State:
         return moves
 
     @staticmethod
-    def positions():
-        """ Iterates over every valid board position
-
-            Yields:
-                valid board positions.
-        """
-        yield from itertools.product(range(BOARD_LENGTH), repeat=2)
-
-    @staticmethod
     def create_from_json(json_fp):
-        """ Creates a board object from a json file"""
+        """ Creates a State object from a json file. Also initializes the 
+            singleton ExplosionComponent
+        
+            Args:
+                json_fp: file pointer object for a json file of State data
+            
+            Returns:
+                A State object
+        """
         black = []
         white = []
         for c, stacks in json.load(json_fp).items():
@@ -217,21 +243,17 @@ class State:
                 else:
                     white.append(Stack(pos=(x, y), height=height))
         
-        
         ExplosionComponent.create(b.pos for b in black)
         
-        if ExplosionComponent.num_components() > len(white):
+        #check if we have enough tokens to send one to each component
+        if ExplosionComponent.num_components() > sum(w.height for w in white): 
             goals = ExplosionComponent.component_radii_intersections()
+        
+        #if we do not set the intersections between components as the goal
         else:
             goals = ExplosionComponent.component_radii()
 
-        return State(frozenset(white), frozenset(black), goals, None)
-
+        return State(frozenset(white), frozenset(black), goals)
 
 if __name__ == "__main__":
-    import sys
-    import util
-    with open(sys.argv[1]) as fp:
-        s = State.create_from_json(fp)
-
-    util.print_board(s.get_print_dict())
+    pass
