@@ -1,13 +1,25 @@
 from search import board
 
 class ExplosionComponent:
-    #TODO: explain this class
+    """ This class is a Singleton which represents the components of a set of 
+        Stacks. We define the components of a set of stacks to be the disjoint
+        partition of the stacks such that for any component, if any stack in 
+        the component explodes then any other stack in the component will 
+        necessarily explode.
+        
+        It is reletively expensive to calculate all components, and componets
+        of black tokens will only ever be removed from the board. Therefore 
+        this singleton class means that repeated component calculations are 
+        not done in the State class as tokens are removed from the board.
+    """
 
+    #When initialized, a frozenset of disjoint frozensets. The elements of each
+    #set will explode if any other element explode, and will not explode if an
+    #element of another set explodes
     _components = None
 
     @staticmethod
     def create(positions):
-        #TODO: fix docstring
         """ Finds the groups of stacks in the same 'explosion component', that
             a group of stacks which will explode if any member in the group
             explodes.
@@ -45,25 +57,28 @@ class ExplosionComponent:
 
     @staticmethod
     def num_components():
+        """ Returns the number of components"""
         assert ExplosionComponent is not None, "Not initialized."
         return len(ExplosionComponent._components)
     
     @staticmethod
     def component_radii():
+        """ Returns the explosion radii of each component.
+        
+            Returns:
+                A frozenset of frozensets, which are the explosion radii
+                of the componets"""
         assert ExplosionComponent is not None, "Not initialized."
         #pylint:disable=not-an-iterable
         return frozenset(board.explosion_radii(c) for c in ExplosionComponent._components)
 
     @staticmethod
     def component_radii_intersections():
-        #TODO fix docstring
-        """ Finds which sets of coordinates are not disjoint, and returns the
-            intersection of those that are.
-            Args:
-                sets: A list of sets of explosion radii
+        """ Finds the fewest number of disjoint sets such that a position
+            from every explosion radius is contained in at least one set
+
             Returns:
-                A list of disjoint sets, where each set contains the positions
-                for which the corresponding group/(s) of stacks can be detonated from.
+                A frozenset of frozensets as described
         """
         assert ExplosionComponent is not None, "Not initialized."
         
@@ -87,11 +102,6 @@ class ExplosionComponent:
         return frozenset(results)
 
     @staticmethod
-    def components_containing(pos):
-        assert ExplosionComponent is not None, "Not initialized."
-        #pylint: disable=not-an-iterable
-        return [c for c in ExplosionComponent._components if pos in c]
-        
-    @staticmethod
     def get():
+        """ Gets the instance """
         return ExplosionComponent._components
