@@ -20,7 +20,7 @@ def reconstruct_action(state_from, state_to):
     stacks_start = list(white_from.difference(white_to))
     stacks_end = list(white_to.difference(white_from))
 
-    assert 1 <= len(stacks_start) <= 2 and 0 <= len(stacks_end) <= 2
+    assert 1 <= len(stacks_start) and 0 <= len(stacks_end)
 
     #stack exploded
     if len(stacks_end) == 0:
