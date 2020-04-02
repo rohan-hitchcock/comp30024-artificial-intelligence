@@ -21,7 +21,7 @@ class PriorityNode:
         self.node == other.node
 
     def __lt__(self, other):
-        # Choose how this when the class is used!
+        # Choose how this works when the class is used!
         pass
 
     def __gt__(self, other):
@@ -164,16 +164,12 @@ def whole_board_search(start):
 
         Returns:
             A list of States, one move apart, resulting in all black stacks being removed
-
-
-
     """
-
-    print(f"goals: {start.goals}")
 
     cost_heuristic = estimate_cost
     expander = State.generate_next_states
-    goal_reached = all_goals_reached
+    goal_reached = lambda s : not bool(s.goals)
+    #goal_reached = all_goals_reached
 
     return a_star(start, cost_heuristic, expander, goal_reached)
 

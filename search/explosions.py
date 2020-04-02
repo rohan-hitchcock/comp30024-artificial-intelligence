@@ -24,8 +24,7 @@ class ExplosionComponent:
                 A list of disjoint sets, where each set contains the positions
                 of stacks which will explode if any other member of the stack
                 explodes.
-        """
-        
+        """     
         assert ExplosionComponent._components is None, "Already initialized."
 
         ungrouped = set(positions)
@@ -55,6 +54,8 @@ class ExplosionComponent:
     
     @staticmethod
     def component_radii():
+        assert ExplosionComponent is not None, "Not initialized."
+        #pylint:disable=not-an-iterable
         return frozenset(explosion_radii(c) for c in ExplosionComponent._components)
 
     @staticmethod

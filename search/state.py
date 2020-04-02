@@ -17,7 +17,6 @@ Stack = namedtuple("Stack", ["pos", "height"])
 class State:
 
     def __init__(self, white, black, goals, move):
-        
         """ Initializes a state.
 
             Args:
@@ -26,7 +25,6 @@ class State:
                 goals: a frozenset of frozensets of goal positions
                 move: the move taken to get ot this state.
         """
-
         self.white = white
         self.black = black
         self.goals = goals
@@ -106,6 +104,7 @@ class State:
 
         #a component remains on the board if and only if any one of its elements
         #remains on the board
+        #pylint: disable=not-an-iterable
         remaining_components = {
                 c: explosion_radii(c) for c in ExplosionComponent.get() 
                 if any(b.pos in c for b in self.black)
