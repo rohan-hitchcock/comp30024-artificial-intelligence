@@ -23,14 +23,13 @@ def get_labeled_print(components):
 
 
 def decide_print(move):
-    pos1, pos2, h = move
-    if pos1 == pos2:
-        x, y = pos1
-        util.print_boom(x, y)
+    if len(move) == 2:
+        util.print_boom(*move)
     else:
-        x1, y1 = pos1
-        x2, y2 = pos2
-        util.print_move(h, x1, y1, x2, y2)
+        old_pos, new_pos, num_tokens = move
+        x_old, y_old = old_pos
+        x_new, y_new = new_pos
+        util.print_move(num_tokens, x_old, y_old, x_new, y_new)
 
 
 def main():
@@ -59,11 +58,22 @@ def main():
         print("No path found.")
     else:
         print("State sequence: ")
+
+        for s in state_seq:
+            util.print_board(s.get_print_dict())
+
+        print()
+        print()
+        """
         for s in state_seq[1:]:
-            decide_print(s.created_from)
-        for w in state_seq[-1].white.keys():
-            x, y = w
-            util.print_boom(x, y)
+            decide_print(s.prev_move)
+            
+
+        last_state = state_seq[-1]
+        if last_state.goals:
+            for w in last_state.white:
+                util.print_boom(w.pos[0], w.pos[1])
+        """
 
 
 if __name__ == '__main__':

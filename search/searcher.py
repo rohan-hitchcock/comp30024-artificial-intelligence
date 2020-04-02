@@ -118,7 +118,7 @@ def all_goals_reached(state):
     """
     for g in state.goals:
 
-        if not any(pos in g for pos in state.white):
+        if not any(w.pos in g for w in state.white):
             return False
     return True
 
@@ -134,36 +134,13 @@ def estimate_cost(state):
             The cost estimate as an integer.
     """
     cost_estimate = 0
-    sum = 0
-
-    for n in state.white.values():
-        sum += n
-    if sum < len(state.goals):
-        state.generate_goal_states()
-        if sum < len(state.goals):
-            return 10000000000
+    
+    if sum(w.height for w in state.white) < len(state.goals):
+        return 10000000000
     for g in state.goals:
-        cost_estimate += min(stack_l1_norm_cost(s, h, g) for s, h in state.white.items()) + 1
+        cost_estimate += min(stack_l1_norm_cost(pos, h, g) for pos, h in state.white) + 1
 
     return cost_estimate
-
-
-def generate_states(state):
-    """ Creates a list of State objects reachable from the given state
-        Args:
-            state: The State object were generating states from.
-
-        Returns:
-            A list of State objects
-    """
-    states = []
-    for c in state.white.keys():
-        for t, h in state.possible_moves(c):
-            temp = state.change_state(c, t, h)
-            if temp != state:
-                states.append(temp)
-    return states
-
 
 def stack_l1_norm_cost(p, h, goals):
     """ Returns the minimum cost from position p to any position in the set of coordinates goals,
@@ -179,7 +156,7 @@ def stack_l1_norm_cost(p, h, goals):
     return min(sum(ceil(abs(x - y) / h) for x, y in zip(p, g)) for g in goals)
 
 
-def whole_board_search(board):
+def whole_board_search(start):
     """ Uses A* to generate the sequence of States (if they exist) the board must
         go through in order to remove all black stacks
         Args:
@@ -191,15 +168,14 @@ def whole_board_search(board):
 
 
     """
-    board.generate_goal_states()
 
-    print(f"goals: {board.goals}")
+    print(f"goals: {start.goals}")
 
     cost_heuristic = estimate_cost
-    expander = generate_states
+    expander = State.generate_next_states
     goal_reached = all_goals_reached
 
-    return a_star(board, cost_heuristic, expander, goal_reached)
+    return a_star(start, cost_heuristic, expander, goal_reached)
 
 
 if __name__ == "__main__":

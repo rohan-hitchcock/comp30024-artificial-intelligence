@@ -1,5 +1,10 @@
 import itertools
 import json
+from collections import namedtuple
+
+from search.explosions import ExplosionComponent, explosion_radius, explosion_radii, is_valid_position
+
+BOARD_LENGTH = 8
 
 BLACK = 'b'
 WHITE = 'w'
@@ -7,66 +12,39 @@ WHITE = 'w'
 J_WHITE_NAME = "white"
 J_BLACK_NAME = "black"
 
-BOARD_LENGTH = 8
-
-EXPL_RAD = 1
-
+Stack = namedtuple("Stack", ["pos", "height"])
 
 class State:
-    length = BOARD_LENGTH
-    expl_rad = EXPL_RAD
 
-    def __init__(self):
-        """ Initialises an empty state """
-        self.white = dict()
-        self.black = dict()
-        self.goals = list()
-        self.created_from = tuple()
+    def __init__(self, white, black, goals, move):
+        
+        """ Initializes a state.
+
+            Args:
+                white: a frozenset of Stack objects representing white tokens
+                black: a frozenset of Stack objects representing black tokens
+                goals: a frozenset of frozensets of goal positions
+                move: the move taken to get ot this state.
+        """
+
+        self.white = white
+        self.black = black
+        self.goals = goals
+        self.prev_move = move
 
     def __str__(self):
-        return str(self.white)
+        #TODO fix this
+        #return f"w: {set(self.white)}\nb: {set(self.black)}\ng: {set(self.goals)}\n"
+        return f"w: {set(self.white)}\nm: {self.prev_move}"
 
     def __repr__(self):
         return f"{type(self).__name__}.{type(self).create_from_dict.__name__}({str(self)}, {str(self.black)}, {str(self.goals)})"
 
     def __hash__(self):
-        return hash((
-            tuple(self.white.items()), 
-            tuple(self.black.items()), 
-            tuple(self.goals)
-        ))
+        return hash((self.white, self.black, self.goals))
         
     def __eq__(self, other):
         return self.white == other.white and self.black == other.black and self.goals == other.goals
-
-    def height_at(self, p, color=None):
-        """ Returns the height of the stack at the given position, or 0 if no
-            stack exists.
-
-            Args:
-                p: a valid board position
-                color: (optional) if set to either BLACK or WHITE only checks
-                for stacks of the selected color
-
-            Returns:
-                An integer with the number of tokens (of the selected color) at
-                position p
-        """
-        if color == WHITE:
-            h = self.white.get(p)
-            return h if h is not None else 0
-        elif color == BLACK:
-            h = self.black.get(p)
-            return h if h is not None else 0
-
-        h_b = self.black.get(p)
-        if h_b is not None:
-            return h_b
-
-        h_w = self.white.get(p)
-        if h_w is not None:
-            return h_w
-        return 0
 
     def stack_positions(self, color=None):
         """ An iterator over every board position containing a stack.
@@ -77,94 +55,120 @@ class State:
 
             Yields:
                 Board positions p for which self.height_at(p, color) is not 0
-        """
+        """  
         if color is None:
-            stacks = itertools.chain(self.black, self.white)
+            stacks = itertools.chain(
+                (b.pos for b in self.black), 
+                (w.pos for w in self.white)
+                )
         else:
-            stacks = self.white if color == WHITE else self.black
+            if color == WHITE:
+                stacks = (w.pos for w in self.white)
+            else:
+                stacks = (b.pos for b in self.black)
         yield from stacks
-
+        
     def as_string(self, p):
-        if self.height_at(p, color=BLACK) > 0:
-            return BLACK + str(self.black[p])
-        elif self.height_at(p, color=WHITE) > 0:
-            return WHITE + str(self.white[p])
-        return ""
+        
+        for b in self.black:
+            if p == b.pos:
+                return BLACK + str(b.height)
 
+        for w in self.white:
+            if p == w.pos:
+                return WHITE + str(w.height)
+        return "" 
+    
     def get_print_dict(self):
         """ Returns a dictionary of this board suitible for printing"""
         return {p: self.as_string(p) for p in State.positions()}
 
-    def components(self, color=None):
-        """ Finds the groups of stacks in the same 'explosion component', that
-            a group of stacks which will explode if any member in the group
-            explodes.
-
-            Args:
-                color: (optional) set WHITE or BLACK to only look at tokens of
-                a particular color
+    def generate_next_states(self):
+        """ Creates a list of State objects reachable from the
+            current state
 
             Returns:
-                A list of disjoint sets, where each set contains the positions
-                of stacks which will explode if any other member of the stack
-                explodes.
+                A list of State objects
         """
-        ungrouped_stacks = set(self.stack_positions(color=color))
+        states = []
 
-        components = []
-        while ungrouped_stacks:
-            to_visit = {ungrouped_stacks.pop()}
-            component = set()
-            while to_visit:
+        for white_stack in self.white:
 
-                s = to_visit.pop()
-                for n in ungrouped_stacks:
-                    if State.in_explosion_radius(s, n) and (n not in component):
-                        to_visit.add(n)
+            #check if a boom move is sensible
+            if any((white_stack.pos in g) for g in self.goals):
+                states.append(self.change_state_boom(white_stack))
+            
+            for pos, num_tokens in self.possible_moves(white_stack):
+                states.append(self.change_state_move(white_stack, pos, num_tokens))
+        return states
 
-                component.add(s)
+    def change_state_boom(self, stack):
 
-            components.append(component)
-            ungrouped_stacks -= component
-        return components
+        #a component remains on the board if and only if any one of its elements
+        #remains on the board
+        remaining_components = {
+                c: explosion_radii(c) for c in ExplosionComponent.get() 
+                if any(b.pos in c for b in self.black)
+            }
 
+        white_to_explode = {stack.pos}
+        exploded = set()
+        
+        while white_to_explode:
 
-    def change_state(self, pos1, pos2, h):
-        new_state_dict = self.white.copy()
+            exploder = white_to_explode.pop()
+            exploded.add(exploder)
 
-        """ if its the move which stays still, check if that position is a goal position, if it is
-            remove all black and white tokens that would be caught in the components at that position"""
-        if pos1 == pos2:
-            for g in self.goals:
-                if pos1 in g:
-                    new_black = self.black.copy()
-                    new_goals = self.goals.copy()
-                    components = self.components()
-                    for c in components:
-                        if pos1 in c:
-                            for b in self.black:
-                                if b in c:
-                                    new_black.pop(b)
-                            for w in self.white:
-                                if w in c and w != pos1:
-                                    new_state_dict.pop(w)
-                    new_goals.remove(g)
-                    new_state_dict.pop(pos1)
-                    return State.create_from_dict(new_state_dict, new_black, new_goals, (pos1, pos2, h))
+            #look at white tokens in the explosion radius radius
+            radius = set(explosion_radius(exploder))
+            for w in self.white:
+                if w.pos in radius and w.pos not in exploded:
+                    white_to_explode.add(w.pos)
 
-        if self.white[pos1] == h:
-            new_state_dict.pop(pos1)
-        else:
-            new_state_dict[pos1] -= h
+            #look at components
+            for c in list(remaining_components.keys()):
+                
+                #the exploder will blow up this component
+                if exploder in remaining_components[c]:
+                    
+                    #set all tokens in radius to exploded
+                    exploded.update(c)
 
-        if pos2 in new_state_dict:
-            new_state_dict[pos2] += h
-        else:
-            new_state_dict[pos2] = h
+                    #check for any other white tokens in this radius
+                    for w in self.white:
+                        if w.pos in remaining_components[c] and w.pos not in exploded:
+                            white_to_explode.add(w.pos)
 
-        return State.create_from_dict(new_state_dict, self.black, self.goals, (pos1, pos2, h))
+                    #remove the component
+                    del remaining_components[c]
 
-    def possible_moves(self, wp):
+        #remove any exploded goals, white stacks and black stacks
+        new_goals = frozenset(g for g in self.goals if g.isdisjoint(exploded))
+        new_black = frozenset(b for b in self.black if b.pos not in exploded)
+        new_white = frozenset(w for w in self.white if w.pos not in exploded)
+        
+        #TODO: is this format for move ok?
+        return State(new_white, new_black, new_goals, stack.pos)
+
+    def change_state_move(self, stack, new_pos, num_tokens):
+
+        new_white = self.white.difference([stack])
+
+        new_height = num_tokens
+        for w in self.white:
+            if w.pos == new_pos:
+                new_white = new_white.difference([w])
+                new_height += w.height
+
+        new_white |= {Stack(new_pos, new_height)}
+
+        if stack.height > num_tokens:
+            new_white |= {Stack(stack.pos, stack.height - num_tokens)}
+        
+
+        return State(new_white, self.black, self.goals, (stack.pos, new_pos, num_tokens))
+
+    def possible_moves(self, stack):
         """ Generates all moves possible for a given white position wp.
 
             Args:
@@ -175,78 +179,21 @@ class State:
                 positions on this board which are a valid move for a white
                 stack at wp
         """
-        wpx, wpy = wp
-        h = self.white[wp]
-
+        wpx, wpy = stack.pos
+        h = stack.height
+        
         # tests whether a generated position e is a valid move from s
-        valid = lambda s, e: State.is_valid_position(e) and (s != e) and (e not in self.black)
+        valid = lambda s, e: is_valid_position(e) and (s != e) and all(e != b.pos for b in self.black)
 
         moves = []
         for n in range(1, h + 1):
             for x in range(wpx - h, wpx + h + 1):
-                if valid(wp, (x, wpy)):
+                if valid(stack.pos, (x, wpy)):
                     moves.append(((x, wpy), n))
             for y in range(wpy - h, wpy + h + 1):
-                if valid(wp, (wpx, y)):
+                if valid(stack.pos, (wpx, y)):
                     moves.append(((wpx, y), n))
-
-        moves.append(((wpx, wpy), h))
-
         return moves
-
-    def generate_goal_states(self):
-        """ Generates a list of disjoint sets of goal positions, given a board. This
-            can be thought of as a formula in conjunctive normal form, that is at
-            least one goal position from each set must be achieved to complete the
-            goal.
-            Args:
-                A Board object.
-            Returns:
-                A list of sets of goal positions.
-        """
-        explosion_radii = [frozenset(self.explosion_radius(c)) for c in self.components(color=BLACK)]
-        
-        if sum(self.white.values()) < len(explosion_radii):
-            self.goals = State.intersecting_radii(explosion_radii)
-        else:
-            self.goals = explosion_radii
-
-    @staticmethod
-    def intersecting_radii(sets):
-        """ Finds which sets of coordinates are not disjoint, and returns the
-            intersection of those that are.
-            Args:
-                sets: A list of sets of explosion radii
-            Returns:
-                A list of disjoint sets, where each set contains the positions
-                for which the corresponding group/(s) of stacks can be detonated from.
-        """
-        results = []
-        while sets:
-            first, rest = sets[0], sets[1:]
-            merged = False
-            sets = []
-            for s in rest:
-                if s and s.isdisjoint(first):
-                    sets.append(s)
-                else:
-                    first &= s
-                    merged = True
-            if merged:
-                sets.append(first)
-            else:
-                results.append(first)
-        return results
-
-    @staticmethod
-    def create_from_dict(white, black, goals, move):
-        s = State()
-
-        s.white = white.copy()
-        s.black = black.copy()
-        s.goals = goals
-        s.created_from = move
-        return s
 
     @staticmethod
     def positions():
@@ -255,86 +202,37 @@ class State:
             Yields:
                 valid board positions.
         """
-        yield from itertools.product(range(State.length), repeat=2)
-
-    @staticmethod
-    def explosion_radius(ps):
-        """ Iterates over the points inside an explosion centered on p
-
-            Args:
-                ps: An iterable of valid board positions
-
-            Yields:
-                Valid board positions in the explosion radius of ps
-        """
-        for p in ps:
-            x, y = p
-            yield from (
-                p for p in itertools.product(
-                    range(x - EXPL_RAD, x + EXPL_RAD + 1),
-                    range(y - EXPL_RAD, y + EXPL_RAD + 1)
-                ) if State.is_valid_position(p)
-            )
-
-    @staticmethod
-    def in_explosion_radius(p1, p2):
-        """ Checks whether two positions are in the same explosion radius
-
-            Args:
-                p1, p2: valid board positions
-
-            Returns:
-                True if p1 and p2 are in each-others explosion radius and false
-                otherwise
-        """
-        return all(abs(x - y) <= State.expl_rad for x, y in zip(p1, p2))
-
-    @staticmethod
-    def is_valid_position(p):
-        """ Checks that the provided position is a valid board position
-
-            Args:
-                pos: the position to be checked
-            Returns:
-                A boolean representing if the position is valid or not
-        """
-        return all(0 <= x < State.length for x in p)
+        yield from itertools.product(range(BOARD_LENGTH), repeat=2)
 
     @staticmethod
     def create_from_json(json_fp):
         """ Creates a board object from a json file"""
-        s = State()
-
+        black = []
+        white = []
         for c, stacks in json.load(json_fp).items():
 
             for height, x, y in stacks:
 
                 if c == J_BLACK_NAME:
-                    s.black[(x, y)] = height
+                    black.append(Stack(pos=(x, y), height=height))
                 else:
-                    s.white[(x, y)] = height
-        return s
+                    white.append(Stack(pos=(x, y), height=height))
+        
+        
+        ExplosionComponent.create(b.pos for b in black)
+        
+        if ExplosionComponent.num_components() > len(white):
+            goals = ExplosionComponent.component_radii_intersections()
+        else:
+            goals = ExplosionComponent.component_radii()
+
+        return State(frozenset(white), frozenset(black), goals, None)
 
 
 if __name__ == "__main__":
-    s1 = State()
-    s2 = State.create_from_dict({(0, 1): 10})
+    import sys
+    import util
+    with open(sys.argv[1]) as fp:
+        s = State.create_from_json(fp)
 
-    print(f"hash(s1) == {hash(s1)}")
-    print(f"hash(str(s1)) == {hash(str(s1))}")
-    print(f"hash(repr(s1)) == {hash(repr(s1))}")
-    print()
-    print(f"hash(s2) == {hash(s2)}")
-    print(f"hash(str(s2)) == {hash(str(s2))}")
-    print(f"hash(repr(s2)) == {hash(repr(s2))}")
-
-
-    class Test:
-        def __init__(self):
-            pass
-
-
-    s = Test()
-    t = Test()
-    print(hash(s))
-    print(hash(t))
+    util.print_board(s.get_print_dict())
