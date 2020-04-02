@@ -67,7 +67,6 @@ def a_star(start, cost_to_goal, expand_node, goal_reached):
         curr_node = heapq.heappop(open_nodes).node
 
         if goal_reached(curr_node):
-            print(len(open_nodes))
             return path_to(curr_node, prev_node)
 
         heap_changed = False
@@ -76,7 +75,8 @@ def a_star(start, cost_to_goal, expand_node, goal_reached):
 
                 neighbor_to_goal_cost = cost_to_goal(neighbor)
 
-                if neighbor_to_goal_cost == 10000000000:
+                #estimator thinks goal is unreachalble so do not include this state
+                if neighbor_to_goal_cost == float("inf"):
                     cost[neighbor] = 1 + cost[curr_node]
                     continue
 
@@ -128,7 +128,7 @@ def estimate_cost(state):
     cost_estimate = 0
     
     if sum(w.height for w in state.white) < len(state.goals):
-        return 10000000000
+        return float("inf")
     for g in state.goals:
         cost_estimate += min(stack_l1_norm_cost(pos, h, g) for pos, h in state.white)
 
