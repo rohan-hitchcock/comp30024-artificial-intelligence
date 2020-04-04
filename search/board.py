@@ -1,10 +1,11 @@
 import itertools
 
-#the side length of the board
+# the side length of the board
 BOARD_LENGTH = 8
 
-#the radius of an explosion of the board
+# the radius of an explosion of the board
 EXPLOSION_RADIUS = 1
+
 
 def positions():
     """ Iterates over every valid board position
@@ -13,6 +14,7 @@ def positions():
             valid board positions.
     """
     yield from itertools.product(range(BOARD_LENGTH), repeat=2)
+
 
 def is_valid_position(p):
     """ Checks that the provided position is a valid board position
@@ -23,6 +25,7 @@ def is_valid_position(p):
             A boolean representing if the position is valid or not
     """
     return all(0 <= x < BOARD_LENGTH for x in p)
+
 
 def in_explosion_radius(p1, p2):
     """ Checks whether two positions are in the same explosion radius
@@ -36,8 +39,9 @@ def in_explosion_radius(p1, p2):
     """
     return all(abs(x - y) <= EXPLOSION_RADIUS for x, y in zip(p1, p2))
 
+
 def explosion_radius(pos):
-    """ Returns an iterable of positions which are in the exposion radius of 
+    """ Returns an iterable of positions which are in the explosion radius of
         an explosion centered on pos.
 
         Args:
@@ -53,16 +57,16 @@ def explosion_radius(pos):
 
     return (p for p in possible if is_valid_position(p))
 
+
 def explosion_radii(ps):
-    #TODO: fix docstring
     """ Finds the explosion radii of an iterable of positions ps
 
         Args:
             ps: An iterable of valid board positions
 
         Returns:
-            A frozenset of valid board positions in the explosion radius of 
-            some element of ps
+            A frozenset of valid board positions in the collective explosion radius of
+             all elements of ps
     """
     r = set()
     for p in ps:
