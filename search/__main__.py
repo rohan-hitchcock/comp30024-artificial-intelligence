@@ -36,18 +36,21 @@ def reconstruct_action(state_from, state_to):
         end = stacks_end[0]
         num_tokens = stacks_start[0].height
 
-    # something more complicated happened
+    # a more complicated move happened
     else:
         for s, e in itertools.product(stacks_start, stacks_end):
 
             if s.pos == e.pos:
-
+                
+                #tokens must have been moved off s 
                 if s.height > e.height:
                     start = s
                     num_tokens = s.height - e.height
+
                     end = stacks_end[0] if e == stacks_end[-1] else stacks_end[-1]
                     break
-
+                
+                #tokens have been moved onto e
                 if s.height < e.height:
                     end = e
                     num_tokens = e.height - s.height
@@ -60,24 +63,18 @@ def reconstruct_action(state_from, state_to):
 
     util.print_move(num_tokens, x_start, y_start, x_end, y_end)
 
-
 def main():
     with open(sys.argv[1]) as file:
         start = State.create_from_json(file)
 
-    print("Board:")
-    util.print_board(start.get_board_dict())
-
     state_seq = searcher.search_board_states(start)
     if state_seq is None:
         print("No path found.")
+    
     else:
-        print("State sequence: ")
-
         # iterate through actions defined by pairs of states
         for state_start, state_end in zip(state_seq, state_seq[1:]):
             reconstruct_action(state_start, state_end)
-
 
 if __name__ == '__main__':
     main()
