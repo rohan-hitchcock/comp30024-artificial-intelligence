@@ -102,7 +102,7 @@
         \end{cases}. 
     \]
 
-    \subsection{Admissibility of the heuristic}
+    \subsection{Admissibility of the heuristic}\label{subsec:admissibility-of-the-heuristic}
     This heuristic is not admissible since it does not consider the potential advantage of stacking. For example in Figure \ref{fig:inadmissable-heuristic} the true cost is $3$ but our heuristic estimates 4.
     \begin{figure}[ht!]
         \centering
@@ -117,6 +117,17 @@
         \label{fig:inadmissable-heuristic}
     \end{figure}
     This means that our implementation is not optimal. However it is worth noting that our implementation will still find the optimal solution in the situation of Figure \ref{fig:inadmissable-heuristic}. Despite the heuristic not being admissible, we believe that starting configurations for which our implementation finds a suboptimal solution are rare. The only examples of such configurations we have managed to find require a 10$\times$10 board.
-    \section{Complications and Problem Features}
+    \section{Problem Features}
+    The time complexity of A* is equivalent to $O(b^{E(h)*d})$, where $b$ is the branching factor, $E(h)$ is the
+    relative error in the heuristic, and $d$ is the average depth of the solution. Due to A* storing all nodes in memory,
+    the space complexity is the same. The exact, or even average values of these terms are very difficult to accurately determine, however we can confine them to ranges.
+    \begin{itemize}
+        \item $5n <= b <= 4nn!$: Where $n$ is the sum of white stack heights on the board. The branching factor is larger when larger stacks are formed, however in most tested cases stacks greater than size 3 are never formed, and the starting state generally does not have stacks larger than 2.
+        \item $0 <= d <= 4*boardSize$: The largest depth of a solution we could come up with is 25. However, we think that having a single stack circuit the entire board is a convservative upper bound.
+        \item $0<= E(h) <= 2*boardSize$: In most cases, our heuristic is close to the true cost, but in the situations that it isn't (See \ref{subsec:admissibility-of-the-heuristic}) we conservatively give an upper bound of the 2 times the board length. This is beyond the maximum possible detour a white stack must take due to blocking black stacks that cannot be detonated early.
+    \end{itemize}
+    It is important to note, that as one of these values rises (eg, $b$) another tends to fall (eg $d$).
+    Thus making the final time and space complexity: $n <= O(Solution) <= {nn!}^{{boardSize}^2}$
+
 
 \end{document}
