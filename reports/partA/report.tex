@@ -1,7 +1,42 @@
 \documentclass[11pt]{article}
 
 \usepackage{fancyhdr}
-\usepackage[margin=1in,headheight=13.6pt]{geometry}
+\usepackage{tikz}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{geometry}
+
+\geometry{tmargin=2cm,bmargin=2cm,lmargin=2cm,rmargin=2cm}
+
+%theorem and definition environment
+\usepackage{amsthm}
+
+\usepackage{mathtools}
+
+% From the assignment spec source *********************************
+% Custom TikZ commands
+\newcommand{\white}[3] {
+  \foreach \x in {0, ..., #3} {
+    \draw[fill=white] ({.5+#1},{\x*.1+.5+#2}) circle (0.42) node {#3};
+  }
+}
+\newcommand{\black}[3] {
+  \foreach \x in {0, ..., #3} {
+    \draw[fill=white!70!black] ({.5+#1},{\x*.1+.5+#2}) circle (0.42) node {#3};
+  }
+}
+\newcommand{\colorSquare}[3] {
+  \draw[fill=#1] ({#2},{#3}) rectangle ({#2+1},{#3+1});
+}
+
+%******************************************************************
+
+%defines a new amsthm environment in the 'definition' style
+\theoremstyle{definition}
+\newtheorem{definition}{Definition} %{environment name}{environment text}
+
+%define equal symbol 
+\def\defeq{\coloneqq}
 
 
 %header and footer
@@ -15,95 +50,73 @@
 \renewcommand{\headrulewidth}{0.4pt}
 
 \begin{document}
-    \title{\textbf{Assignment Part A}}
-    \author{Rohan Hitchcock and Patrick Randell}
-    \date{}
-    \maketitle
-    \section{Introduction}\label{sec:introduction}
-    Contained in this report are the details of our approach to Project Part A: Searching, the first assignment in the course
-    COMP30024: Artificial Intelligence at the University of Melbourne 2020 Semester 1.
-    \section{Definitions}\label{sec:definitions}
+    \begin{center}
+        \textbf{\Large Assignment Part A}
+        \medskip
+
+        Rohan Hitchcock and Patrick Randell
+    \end{center}
     Before reading the following, it is worth defining some terms that will be used throughout this report.
-    \begin{itemize}
-        \item "Components" - In every board configuration there exists black stacks that need to be removed.
-        If a black stack is within the 3x3 radius of another black stack, then both would explode if either one did.
-        All black stacks which are recursively within the 3x3 radius of another are considered to be "components"
-        \item "Goal group" - A goal group is a set of positions for which a white stack may situate itself, and explode,
-        in order to remove one or more components.
-        It is generally, but not always, the collective radius of a component, as we will discuss in the section "Intersections"
-        at the end of the report.
-    \end{itemize}
+    \begin{definition} \label{defn:component}
+        A \emph{component} is a subset of the black stacks on a board such that if one stack in the component explodes then all other stacks in the component will necessarily explode. 
+    \end{definition}
+
+    \begin{definition} \label{defn:goal}
+        A \emph{goal set} (or \emph{goal}) is a subset of board positions in which a white token can explode in order to remove one or more components. For example, the set of positions surrounding a component could be a goal set.
+    \end{definition}
 
     \section{Problem Formulation}\label{sec:problem-formulation}
-    After trialling many different methods for formulating the problem, we found that the best way for a search
-    algorithm to solve all possible scenarios was to have knowledge of the entire board at each state.
-    Thus, the problem was formulated as follows:
-    \subsection{States}\label{subsec:states}
-    A state was defined as a valid board configuration, including the positions of all black and white stacks on the board, and
-    their heights.
-    Included in a state are the goal groups (see definition): A list of sets of board positions, that white stacks
-    need to be in, in order to "BOOM" and remove all black stacks, winning the game.
-    These goals are generated from the black components in that state.
-    It was important to have these goals included as an attribute of a State, as in order to solve certain scenarios,
-    a goal group needed to be removed so others can be reached.
-    \subsection{Actions}\label{subsec:actions}
-    An action is defined as any valid move of a white stack in the current state.
-    This can include moving an entire stack, a subset of a stack, exploding a stack or stacking stacks.
-    \subsection{Path Costs}\label{subsec:path-costs}
-    The cost of a path to a solution is 1 for each action made until the goal test is passed.
-    \subsection{Goal Test}\label{subsec:goal-test}
-    The goal test for this problem was to check whether all black components were removed.
-    More simply, the goal test checks whether all black stacks are removed from the board, and is passed if they are.
+
+    We approached this problem as an informed search problem on the space of valid board configurations, the goal of which is to arrive at a board configuration does not contain any black tokens via a sequence of valid white actions. Prior to beginning the search, we formulated the goal as follows. We first computed the set of components (Definition \ref{defn:component}) of the starting board configuration, and from this a set of goal sets (Definition \ref{defn:goal}) such that exploding a white token in all of the goal sets will remove all components -- and hence black tokens -- from the board. In the simplest case the goal sets are the set positions surrounding a component, however in some problems (such as in the second test case) goal sets must be formulated as intersection between positions surrounding two or more components. This decision was made based on the number of white tokens available. 
+
+    We defined a state as a valid board configuration, which comprises of the position and height of all white and black stacks. Also included in the state are the remaining goal sets. Although it is possible to calculate these from the black stack data it is more efficient to transfer this data between states. A state is a goal state if and and only if its set of goal sets is empty, which is equivalent to a goal state containing no black stacks.
+
+    The transitions from a state are given by the valid actions of white stacks. A valid white action is either moving some number of tokens from a stack to another position, or exploding a stack. In order to reduce the branching factor, we chose to only allow a white stack to do an explode action if it was in a goal state. 
+    
+    We defined the true cost of reaching a goal state from a state $S$ as the minimum number of white actions required to reach a goal state starting from $S$. This means each transition has cost one. 
+    
     \section{Search Algorithm}\label{sec:search-algorithm}
-    We decided to choose the A* search algorithm for this problem.
-    We chose A* because it is both complete and optimal, and allowed us to carefully design a heuristic that would
-    optimise the search for our needs and requirements.
-    Due to time being the main constraint for this assignment, we were less concerned about the space
-    required by A* to store all nodes.
-    \subsection{Heuristic}\label{subsec:heuristic}
-    The heuristic we used for a state was the minimum moves for any white stack to any goal position plus the number of
-    goal groups in that state.
-    This was calculated by finding the minimum cost from each white stack to any position in the set of coordinate
-    goals, with the possibility of moving h squares at a time (where h is the height of the stack).
-    We then chose the minimum, after calculating this value for each white stack.\\\\
-    Adding the number of goal groups meant that the algorithm was rewarded for removing goal groups.
-    We also included a condition, that if the sum of the heights of all white stacks was less than the number of
-    remaining goal groups (considering intersections of goal groups as a single group), the cost would be infinite,
-    thus pruning branches that would not find a solution early.\\
-    A visualisation of this is below.\\
-    This heuristic is not admissible, as in certain states, the true cost to a solution would include stacking then
-    moving.
-    However, our heuristic only considers moving the existing stacks on the board, not creating new ones.
-    It is important to note though, that when generating next states, the state including stacking would be
-    given the lowest cost, making it still optimal.
-    \section{Complications and Problem Features}\label{sec:complications-and-problem-features}
-    There were several "classes" of problems that needed to be considered when solving this searching problem.
-    \subsection{Intersections}\label{subsec:intersections}
-    In some cases, two or more black components would exist that were themselves disjoint, however their explosion radius
-    had overlapping coordinates.
-    Given less white stacks than number of components, these white stacks would have to position themselves in the
-    intersection of the radii of these components in order to explode and arrive at the solution.
-    This situation was solved by calculating the sum of the heights of white stacks on the board, and testing if this sum
-    was less than the number of black components.
-    If it was, we attempted to find any intersections between the radius of black stack components, and if they existed,
-    making these intersections a goal group in place of the black stack components to which they belonged, reducing
-    the number of goal groups (which would otherwise be the collective radius of a component) and potentially making a
-    solution available to our algorithm.
-    \subsection{Stacking}\label{subsec:stacking}
-    In some cases, the only way to find a solution would be for two white stacks to combine, and move over 1 or more
-    black stacks to reach parts of the board which were otherwise inaccessible.
-    By having each state an entire board configuration, when generating new states, merging stacks was included and thus
-    this problem was solved by design
-    \subsection{Pre-exploding}\label{subsec:pre-exploding}
-    In some cases, a component had to be removed in order for other white stacks to be able to reach the other goal
-    groups.
-    These cases also ended up being solved by design, as other options would be exhausted and A* would eventually
-    explore this option.
-    \subsection{Combinations}\label{subsec:combinations}
-    In a case where pre-exploding was required, but the remaining component (after pre-exploding) had an intersection
-    with the first component (the one that was pre-exploded), these cases would not be solved if our algorithm found
-    the intersections of goal groups before testing whether it was required (sum(heights) < num(components)), as it
-    would set the goal position beyond what was accessible.
-    (probs insert picture?)
+    We decided to choose the A* search algorithm for this problem since it is complete and optimal (given an admissible heuristic). Experimentation showed that the memory use for A* was not prohibitive: the hardest problems required around 2000 nodes, which when considering the size of a node is in the order of 1Mb. Most problems do not require more than 100 nodes.
+
+    \subsection{The heuristic}\label{subsec:heuristic}
+    
+    For some state, let $W$ be the set of white stacks and $G$ the set of goal sets. In a board with no other stacks, the minimum number of moves of a white stack $w \in W$ of height $n$ at position $(a, b)$ must take to reach position $(x, y)$ is 
+    \[
+        c(w, (x, y)) \defeq \left\lceil  \frac{| x - a |}{n} \right\rceil + \left\lceil  \frac{| y - b |}{n} \right\rceil.
+    \]
+    This is the $L^1$-norm dilated according to the movement speed of the stack. Since each goal set $g \in G$ is a set of board positions we define the distance of a goal to a white token to be
+    \[
+        c(w, g) \defeq \min _{(x, y) \in g} c(w, (x, y))
+    \] 
+    We defined the heuristic as the sum of the distance of each goal to its closest white token, plus the cost of exploding at each goal.
+    \[
+        h(W, G) \defeq \sum _{g \in G} \min _{w\in W} c(w, g) + |G|
+    \]
+    Note that the same white stack may be the closest stack to two or more different goals. While $h(W, G)$ would be a better approximation if each goal had a unique white token in the sum, computing this minimum proved to be more computationally expensive than the gains made by the improvement in the heuristic.
+
+    A slight improvement can be made by observing that if $|W| < |G|$ then it is impossible to reach a goal state. This was incorporated into the heuristic like so:
+    \[
+        h'(W, C) \defeq \begin{cases}
+            \infty & |W| < |G|\\
+            h(W, C) & \textrm{otherwise}
+        \end{cases}. 
+    \]
+
+    \subsection{Admissibility of the heuristic}
+    This heuristic is not admissible since it does not consider the potential advantage of stacking. For example in Figure \ref{fig:inadmissable-heuristic} the true cost is $3$ but our heuristic estimates 4.
+    \begin{figure}[ht!]
+        \centering
+        \begin{tikzpicture}[scale=0.6]
+            \draw[fill=black!2!white] (0, 0) rectangle (7, 1);
+            \draw[step=1] (0, 0) grid (7, 1);
+            \black{0}{0}{1};
+            \white{5}{0}{1};
+            \white{6}{0}{1};
+        \end{tikzpicture}
+        \caption{}
+        \label{fig:inadmissable-heuristic}
+    \end{figure}
+    This means that our implementation is not optimal. However it is worth noting that our implementation will still find the optimal solution in the situation of Figure \ref{fig:inadmissable-heuristic}. Despite the heuristic not being admissible, we believe that starting configurations for which our implementation finds a suboptimal solution are rare. The only examples of such configurations we have managed to find require a 10$\times$10 board.
+    \section{Complications and Problem Features}
 
 \end{document}
