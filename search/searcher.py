@@ -5,7 +5,6 @@ from math import ceil
 import itertools
 from search.state import State
 
-
 class PriorityNode:
     """ This class is used to encode priority information about a node (anything).
         It allows custom implementation of a 'comparable' interface (in Java
@@ -21,7 +20,7 @@ class PriorityNode:
         self.node == other.node
 
     def __lt__(self, other):
-        # Choose how this when the class is used!
+        # Choose how this works when the class is used!
         pass
 
     def __gt__(self, other):
@@ -35,16 +34,20 @@ class PriorityNode:
 
 
 def a_star(start, cost_to_goal, expand_node, goal_reached):
-    """ The world-famous A* algorithm. Note it is generic and does not assume
-        anything about what a node is.
+    """ The world-famous A* algorithm. 
+    
+        Note it is generic and does not assume anything about what a node is.
+
         Args:
-            start: the state to start the search from
+            start: the node to start the search from
             goals: a set of goal states
             cost_to_goal: a callable of the form cost_to_goal(state, goals) which
             estimates the cost reaching any goal from state. Must return something
             which can be cast to a float.
             expand_node: a callable of the form expand_node(node) which returns
             an iterable of next-nodes from node.
+            goal_reached: a callable of the form goal_reached(node) which returns
+            true iff node is a goal state
         Returns:
             A sequence of states starting with `start' and ending with some
             state in `goals' (inclusive of both)
@@ -64,7 +67,6 @@ def a_star(start, cost_to_goal, expand_node, goal_reached):
         curr_node = heapq.heappop(open_nodes).node
 
         if goal_reached(curr_node):
-            print(len(open_nodes))
             return path_to(curr_node, prev_node)
 
         heap_changed = False
@@ -73,7 +75,8 @@ def a_star(start, cost_to_goal, expand_node, goal_reached):
 
                 neighbor_to_goal_cost = cost_to_goal(neighbor)
 
-                if neighbor_to_goal_cost == 10000000000:
+                #estimator thinks goal is unreachalble so do not include this state
+                if neighbor_to_goal_cost == float("inf"):
                     cost[neighbor] = 1 + cost[curr_node]
                     continue
 
@@ -88,9 +91,8 @@ def a_star(start, cost_to_goal, expand_node, goal_reached):
 
         if heap_changed:
             heapq.heapify(open_nodes)
-
+    #No path found
     return None
-
 
 def path_to(node, prev_node):
     """ Reconstructs the path to node.
@@ -107,26 +109,16 @@ def path_to(node, prev_node):
     l.reverse()
     return l
 
-
-def all_goals_reached(state):
-    """ The goal test; checks whether a state has white stacks in all of it's goal groups.
-        Args:
-            state: The State object were testing
-
-        Returns:
-            Whether the test is passed or not
-    """
-    for g in state.goals:
-
-        if not any(pos in g for pos in state.white):
-            return False
-    return True
-
-
 def estimate_cost(state):
-    """ The cost heuristic; uses the collective minimum l1 norm distance as an estimate, but
-        also considers the number of remaining goal groups, and attempts to prune branches
-        that will likely not reach a solution.
+    """ The cost heuristic.
+    
+        Uses the minimum stack_l1_norm_cost to any white stack for each goal in 
+        state.goals, plus the number of goals (i.e. len(state.goals)) to account
+        for the cost of the explosion action.
+        
+        If state cannot successfully complete all goals then infinity is returned
+        (for example if there are too few white tokens)
+
         Args:
             state: The State object were estimating a cost for
 
@@ -134,73 +126,42 @@ def estimate_cost(state):
             The cost estimate as an integer.
     """
     cost_estimate = 0
-    sum = 0
-
-    for n in state.white.values():
-        sum += n
-    if sum < len(state.goals):
-        state.generate_goal_states()
-        if sum < len(state.goals):
-            return 10000000000
+    
+    if sum(w.height for w in state.white) < len(state.goals):
+        return float("inf")
     for g in state.goals:
-        cost_estimate += min(stack_l1_norm_cost(s, h, g) for s, h in state.white.items()) + 1
+        cost_estimate += min(stack_l1_norm_cost(pos, h, g) for pos, h in state.white)
 
-    return cost_estimate
+    return cost_estimate + len(state.goals)
 
-
-def generate_states(state):
-    """ Creates a list of State objects reachable from the given state
-        Args:
-            state: The State object were generating states from.
-
-        Returns:
-            A list of State objects
-    """
-    states = []
-    for c in state.white.keys():
-        for t, h in state.possible_moves(c):
-            temp = state.change_state(c, t, h)
-            if temp != state:
-                states.append(temp)
-    return states
-
-
-def stack_l1_norm_cost(p, h, goals):
+def stack_l1_norm_cost(p, h, goal):
     """ Returns the minimum cost from position p to any position in the set of coordinates goals,
         with the possibility of moving h squares at a time.
         Args:
             p: the position moving from
             h: the height of the stack at that position
-            goals: a set of positions
+            goal: a set of goal positions
 
         Returns:
             The minimum distance to a position in goals from p, moving h steps at a time.
     """
-    return min(sum(ceil(abs(x - y) / h) for x, y in zip(p, g)) for g in goals)
+    return min(sum(ceil(abs(x - y) / h) for x, y in zip(p, g)) for g in goal)
 
-
-def whole_board_search(board):
+def search_board_states(start):
     """ Uses A* to generate the sequence of States (if they exist) the board must
         go through in order to remove all black stacks
         Args:
-            board: The initial State of the board.
+            start: The initial State of the board.
 
         Returns:
-            A list of States, one move apart, resulting in all black stacks being removed
-
-
-
+            A list of States, one move apart. The final state will have no 
+            black stacks. If this State is not reachable then None is returned
     """
-    board.generate_goal_states()
-
-    print(f"goals: {board.goals}")
-
     cost_heuristic = estimate_cost
-    expander = generate_states
-    goal_reached = all_goals_reached
+    expander = State.generate_next_states
+    goal_reached = lambda s : not bool(s.goals)
 
-    return a_star(board, cost_heuristic, expander, goal_reached)
-
+    return a_star(start, cost_heuristic, expander, goal_reached)
 
 if __name__ == "__main__":
     pass
