@@ -32,7 +32,6 @@ class PriorityNode:
     def __le__(self, other):
         return self == other or self < other
 
-
 def a_star(start, cost_to_goal, expand_node, goal_reached):
     """ The world-famous A* algorithm. 
     
@@ -125,6 +124,7 @@ def estimate_cost(state):
         Returns:
             The cost estimate as an integer.
     """
+
     cost_estimate = 0
     
     if sum(w.height for w in state.white) < len(state.goals):
