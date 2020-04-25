@@ -1,6 +1,9 @@
+import numpy as np
+import random
+from pretty_fly_for_an_AI import state as s
 
 class ExamplePlayer:
-    def __init__(self, colour):
+    def __init__(self, color):
         """
         This method is called once at the beginning of the game to initialise
         your player. You should use this opportunity to set up your own internal
@@ -11,8 +14,9 @@ class ExamplePlayer:
         program will play as (White or Black). The value will be one of the 
         strings "white" or "black" correspondingly.
         """
-        # TODO: Set up state representation.
+        self.state = s.State.create_start_state(color)
 
+        self.color = color
 
     def action(self):
         """
@@ -23,11 +27,12 @@ class ExamplePlayer:
         return an allowed action to play on this turn. The action must be
         represented based on the spec's instructions for representing actions.
         """
-        # TODO: Decide what action to take, and return it
-        return ("BOOM", (0, 0))
+        
+        action_id, next_state = random.choice(list(self.state.next_states(opponent=False)))
+        return action_id
 
 
-    def update(self, colour, action):
+    def update(self, color, action):
         """
         This method is called at the end of every turn (including your player’s 
         turns) to inform your player about the most recent action. You should 
@@ -45,4 +50,18 @@ class ExamplePlayer:
         for the player colour (your method does not need to validate the action
         against the game rules).
         """
-        # TODO: Update state representation in response to action.
+        
+        action_type, data = action[0], action[1:]
+
+        #check if this is an opponents move
+        opponent = self.color != color
+
+        if action_type == s.MOVE_ACTION:
+            
+            n, sp, ep = data
+            self.state = self.state.move(n, s.ptoi(*sp), s.ptoi(*ep), opponent)
+        else:
+            
+            pos = data[0]
+            self.state = self.state.boom(s.ptoi(*pos))
+            
