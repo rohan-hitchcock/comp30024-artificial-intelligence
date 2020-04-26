@@ -108,7 +108,7 @@ class State:
         """
         next_board = self.board.copy()
 
-        to_boom = [i]
+        to_boom = {i}
         while to_boom:
 
             boom = to_boom.pop()
@@ -118,7 +118,7 @@ class State:
 
             #set all token indexes (the non-zero entries of board) in radius to boom
             radius = boom_radius(boom)
-            to_boom.extend(radius[next_board[radius] != 0])
+            to_boom.update(radius[next_board[radius] != 0])
 
         return State(next_board)
 
@@ -156,6 +156,9 @@ class State:
                 if self.board[to_i] * self.board[si] >= 0:
                     yield from ((move_name(n, si, to_i), self.move(n, si, to_i, opponent))
                                 for n in range(1, height + 1))
+
+    def is_gameover(self):
+        return np.all(self.board >= 0) or np.all(self.board <= 0)
 
     @staticmethod
     def create_start_state(color):

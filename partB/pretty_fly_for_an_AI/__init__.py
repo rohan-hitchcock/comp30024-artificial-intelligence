@@ -1,8 +1,8 @@
-# Note:
-# The class defined within this module with the name 'Player' is the
-# class we will test when assessing your project.
-# You can define your player class inside this file, or, as in the
-# example import below, you can define it in another file and import
-# it into this module with the name 'Player':
 
-from pretty_fly_for_an_AI.player import ExamplePlayer as Player
+#this is our current 'best' player
+from pretty_fly_for_an_AI.player import Player
+
+
+#we can import other players to compare. 
+# use pretty_fly_for_an_AI:OtherPlayer as an argument to referee
+from pretty_fly_for_an_AI.random_player import RandomPlayer 

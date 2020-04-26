@@ -1,8 +1,14 @@
 import numpy as np
-import random
 from pretty_fly_for_an_AI import state as s
+from pretty_fly_for_an_AI.minimax import minimax
 
-class ExamplePlayer:
+class Player:
+
+
+    minimax_depth = 3
+
+    evaluation_function = lambda state : np.sum(state.board)
+
     def __init__(self, color):
         """
         This method is called once at the beginning of the game to initialise
@@ -27,10 +33,7 @@ class ExamplePlayer:
         return an allowed action to play on this turn. The action must be
         represented based on the spec's instructions for representing actions.
         """
-        
-        action_id, next_state = random.choice(list(self.state.next_states(opponent=False)))
-        return action_id
-
+        return minimax(self.state, depth=Player.minimax_depth, ev=Player.evaluation_function)
 
     def update(self, color, action):
         """
