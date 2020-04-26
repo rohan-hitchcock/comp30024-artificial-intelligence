@@ -1,6 +1,6 @@
 import numpy as np
 from pretty_fly_for_an_AI import state as s
-from pretty_fly_for_an_AI.minimax import minimax
+from pretty_fly_for_an_AI.minimax import alpha_beta_search as minimax
 
 class Player:
 
