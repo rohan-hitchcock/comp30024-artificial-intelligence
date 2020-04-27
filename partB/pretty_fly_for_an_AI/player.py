@@ -6,7 +6,7 @@ from collections import defaultdict as dd
 class Player:
 
 
-    minimax_depth = 2
+    minimax_depth = 3
 
     evaluation_function = lambda state: Player.eval(state)
 
@@ -15,7 +15,15 @@ class Player:
         unique, counts = np.unique(state.board, return_counts=True)
         d = dd(int)
         d.update(zip(unique, counts))
-        return 3*d[3] - 3*d[-3]
+        return -3*d[3]-2*d[2]-d[1] #- 4*d[-3]-3*d[-2] - 2*d[1]
+
+
+    @staticmethod
+    def new_eval(state, opponent=False):
+
+        len(list(state.next_states(opponent=False)))
+        #feature 1: Number of pieces for each player
+
 
     def __init__(self, color):
         """
