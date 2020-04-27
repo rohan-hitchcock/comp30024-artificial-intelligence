@@ -61,11 +61,11 @@ def max_value(state, depth, ev, alpha, beta):
         # v = max(v, min_value(child_state, depth - 1, ev, alpha, beta)[0])
 
         if v >= beta:
-            print("summary max: v= " + str(v) + " from: " + str(child) + " on move: " + str(move))
+            # print("summary max: v= " + str(v) + " from: " + str(child) + " on move: " + str(move))
 
             return v, move
         alpha = max(alpha, v)
-    print("summary max: v= " + str(v) + " from: " + str(child) + " on move: " + str(move))
+    # print("summary max: v= " + str(v) + " from: " + str(child) + " on move: " + str(move))
     return v, move
 
 
@@ -85,10 +85,10 @@ def min_value(state, depth, ev, alpha, beta):
         # v = min(v, max_value(child_state, depth - 1, ev, alpha, beta)[0])
 
         if v <= alpha:
-            print("summary min: v= " + str(v) + " from: " + str(child) + " on move: " + str(move))
+            # print("summary min: v= " + str(v) + " from: " + str(child) + " on move: " + str(move))
             return v, move
         beta = min(beta, v)
-    print("summary min: v= " + str(v) + " from: " + str(child) + " on move: " + str(move))
+    # print("summary min: v= " + str(v) + " from: " + str(child) + " on move: " + str(move))
     return v, move
 
 

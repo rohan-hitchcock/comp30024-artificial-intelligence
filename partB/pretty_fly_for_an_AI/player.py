@@ -2,28 +2,57 @@ import numpy as np
 from pretty_fly_for_an_AI import state as s
 from pretty_fly_for_an_AI.minimax import alpha_beta_search as minimax
 from collections import defaultdict as dd
+from math import ceil
+
 
 class Player:
-
-
     minimax_depth = 3
 
-    evaluation_function = lambda state: Player.eval(state)
+    evaluation_function = lambda state: Player.new_eval(state)
 
     @staticmethod
     def eval(state):
         unique, counts = np.unique(state.board, return_counts=True)
         d = dd(int)
         d.update(zip(unique, counts))
-        return -3*d[3]-2*d[2]-d[1] #- 4*d[-3]-3*d[-2] - 2*d[1]
-
+        return d[0]
 
     @staticmethod
-    def new_eval(state, opponent=False):
+    def manhattan(pos1, pos2):
+        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
-        len(list(state.next_states(opponent=False)))
-        #feature 1: Number of pieces for each player
+    @staticmethod
+    def new_eval(state):
 
+        value = 0
+
+        ours = state.board[state.board > 0]
+        theirs = state.board[state.board < 0]
+
+        # feature 1: Number of pieces for each player
+        value += 500 * np.sum(ours)
+        value -= 30 * np.count_nonzero(ours)
+        value += 1000 * np.sum(theirs)
+
+        # feature 2: Number of available moves
+        # value += w_f2 * len(list(state.next_states(opponent=False)))
+        # value -= b_f2 * len(list(state.next_states(opponent=True)))
+
+        # feature 3: Moves required to reach other side
+        # for i in state.board:
+        #     if i > 0:
+        #         value -= ceil((f3*Player.manhattan(s.itop(i), (3, 7)))/i)
+        #     if i < 0:
+        #         value += ceil((f3*Player.manhattan(s.itop(i), (4, 0)))/abs(i))
+
+        # feature 4: Explosion radius. Should include whose turn it is into this
+        for i in range(64):
+            sum = 0
+            if state.board[i] != 0:
+                for j in s.boom_radius(i):
+                    sum += state.board[j]
+                value += 30 * (state.board[i] - sum)
+        return value
 
     def __init__(self, color):
         """
@@ -69,18 +98,17 @@ class Player:
         for the player colour (your method does not need to validate the action
         against the game rules).
         """
-        
+
         action_type, data = action[0], action[1:]
 
-        #check if this is an opponents move
+        # check if this is an opponents move
         opponent = self.color != color
 
         if action_type == s.MOVE_ACTION:
-            
+
             n, sp, ep = data
             self.state = self.state.move(n, s.ptoi(*sp), s.ptoi(*ep), opponent)
         else:
-            
+
             pos = data[0]
             self.state = self.state.boom(s.ptoi(*pos))
-            
