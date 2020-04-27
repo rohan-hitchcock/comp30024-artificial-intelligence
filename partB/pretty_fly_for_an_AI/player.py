@@ -1,13 +1,21 @@
 import numpy as np
 from pretty_fly_for_an_AI import state as s
 from pretty_fly_for_an_AI.minimax import alpha_beta_search as minimax
+from collections import defaultdict as dd
 
 class Player:
 
 
-    minimax_depth = 3
+    minimax_depth = 2
 
-    evaluation_function = lambda state : np.sum(state.board)
+    evaluation_function = lambda state: Player.eval(state)
+
+    @staticmethod
+    def eval(state):
+        unique, counts = np.unique(state.board, return_counts=True)
+        d = dd(int)
+        d.update(zip(unique, counts))
+        return 3*d[3] - 3*d[-3]
 
     def __init__(self, color):
         """
