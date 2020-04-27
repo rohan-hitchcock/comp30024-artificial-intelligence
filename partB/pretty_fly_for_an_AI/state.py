@@ -22,6 +22,9 @@ BOARD_START = np.array([ 1,  1,  0,  1,  1,  0,  1,  1,  1,  1,  0,  1,  1,  0,
                          0,  0,  0,  0,  0,  0, -1, -1,  0, -1, -1,  0, -1, -1, 
                         -1, -1,  0, -1, -1,  0, -1, -1], dtype=np.int8)
 
+#for debugging
+BOARD_EMPTY = np.zeros(BOARD_SIZE ** 2, dtype=np.int8)
+
 class State:
     """ Represents a state of the game
     
