@@ -11,13 +11,6 @@ class Player:
     evaluation_function = lambda state: Player.new_eval(state)
 
     @staticmethod
-    def eval(state):
-        unique, counts = np.unique(state.board, return_counts=True)
-        d = dd(int)
-        d.update(zip(unique, counts))
-        return d[0]
-
-    @staticmethod
     def manhattan(pos1, pos2):
         return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
@@ -28,10 +21,12 @@ class Player:
 
         ours = state.board[state.board > 0]
         theirs = state.board[state.board < 0]
+        rest = state.board[state.board == 0]
 
         # feature 1: Number of pieces for each player
         value += 500 * np.sum(ours)
-        value -= 30 * np.count_nonzero(ours)
+        # value -= 30 * len(ours)
+        value += 10 * len(rest)
         value += 1000 * np.sum(theirs)
 
         # feature 2: Number of available moves
@@ -51,7 +46,7 @@ class Player:
             if state.board[i] != 0:
                 for j in s.boom_radius(i):
                     sum += state.board[j]
-                value += 30 * (state.board[i] - sum)
+                value += 50 * (state.board[i] - sum)
         return value
 
     def __init__(self, color):
