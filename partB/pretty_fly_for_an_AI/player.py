@@ -24,9 +24,13 @@ class Player:
         rest = state.board[state.board == 0]
 
         # feature 1: Number of pieces for each player
-        value += 500 * np.sum(ours)
-        # value -= 30 * len(ours)
-        value += 10 * len(rest)
+        value += 500 * (np.sum(ours) + np.sum(theirs))
+        value -= 30 * len(ours)
+        value += 30 * len(rest)
+        if len(theirs) == 0:
+            value += 100000000
+        if len(ours) == 0:
+            value -= 100000000
         value += 1000 * np.sum(theirs)
 
         # feature 2: Number of available moves
@@ -46,7 +50,7 @@ class Player:
             if state.board[i] != 0:
                 for j in s.boom_radius(i):
                     sum += state.board[j]
-                value += 50 * (state.board[i] - sum)
+                value += 70 * (state.board[i] - sum)
         return value
 
     def __init__(self, color):
