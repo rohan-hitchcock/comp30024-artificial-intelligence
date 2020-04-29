@@ -4,7 +4,6 @@ from pretty_fly_for_an_AI.minimax import alpha_beta_search as minimax
 from collections import defaultdict as dd
 from math import ceil
 
-
 class Player:
     minimax_depth = 3
 
@@ -22,6 +21,7 @@ class Player:
         ours = state.board[state.board > 0]
         theirs = state.board[state.board < 0]
         rest = state.board[state.board == 0]
+
 
         # feature 1: Number of pieces for each player
         value += 500 * (np.sum(ours) + np.sum(theirs))
@@ -111,3 +111,7 @@ class Player:
 
             pos = data[0]
             self.state = self.state.boom(s.ptoi(*pos))
+
+if __name__ == "__main__":
+    pass
+
