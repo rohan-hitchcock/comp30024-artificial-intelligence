@@ -176,19 +176,16 @@ class State:
         # get the indexes of the stacks of the player making the move
         stacks = np.flatnonzero(self.board < 0) if opponent else np.flatnonzero(self.board > 0)
 
+        # All booms generated first
         for si in stacks:
 
-            # The boom move. If the opponent is moving it is simplest to include
-            # this move every time (although optimising here is worth looking into)
-            # if we are moving it never makes sense to boom a token if it does
-            # not remove at least one oponent token from the board
-            # if opponent:
-            #     yield boom_name(si), self.boom(si)
+            # Assumes that opponent also wont blow up. If it does, thats fine but dont need to generate the move.
             if not opponent and any(pos < 0 for pos in self.board[boom_radius(si)]):
                 yield boom_name(si), self.boom(si)
             if opponent and any(pos > 0 for pos in self.board[boom_radius(si)]):
                 yield boom_name(si), self.boom(si)
 
+        # All moves generated next
         for si in stacks:
 
             height = abs(self.board[si])
@@ -196,6 +193,7 @@ class State:
             for to_i in move_positions(si, height):
                 # checks if to_i is either empty or the same color as si
                 if self.board[to_i] * self.board[si] >= 0:
+                    # Moves generated from moving least first, to moving all last.
                     yield from ((move_name(n, si, to_i), self.move(n, si, to_i, opponent))
                                 for n in range(1, height + 1))
 
@@ -263,6 +261,7 @@ def move_positions(stack_i, height):
     x0, y0 = itop(stack_i)
 
     # iterate over move distances
+    # Moves generated from furthest first to closest last
     for d in range(height, 0, -1):
 
         if 0 <= y0 - d: mp.append(ptoi(x0, y0 - d))
