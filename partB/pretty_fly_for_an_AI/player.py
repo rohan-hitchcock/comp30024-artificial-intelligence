@@ -21,36 +21,35 @@ class Player:
         ours = state.board[state.board > 0]
         theirs = state.board[state.board < 0]
         rest = state.board[state.board == 0]
-
+        diff = (np.sum(ours) + np.sum(theirs))
 
         # feature 1: Number of pieces for each player
-        value += 500 * (np.sum(ours) + np.sum(theirs))
-        value -= 30 * len(ours)
-        value += 30 * len(rest)
+        value += 50 * diff * diff * np.sign(diff)
+        value -= 4 * len(ours)
+        value += 4 * len(rest)
+
+        #feature: winning
         if len(theirs) == 0:
-            value += 100000000
-        if len(ours) == 0:
-            value -= 100000000
-        value += 1000 * np.sum(theirs)
+            value += 100000
 
         # feature 2: Number of available moves
         # value += w_f2 * len(list(state.next_states(opponent=False)))
         # value -= b_f2 * len(list(state.next_states(opponent=True)))
 
-        # feature 3: Moves required to reach other side
-        # for i in state.board:
-        #     if i > 0:
-        #         value -= ceil((f3*Player.manhattan(s.itop(i), (3, 7)))/i)
-        #     if i < 0:
-        #         value += ceil((f3*Player.manhattan(s.itop(i), (4, 0)))/abs(i))
+        # feature 3: Distance to middle of the board. Late game
+        if len(rest) > 59:
+            for i in state.board:
+                if i > 0:
+                    value -= ceil(10*state.board[i]*Player.manhattan(s.itop(i), (3, 4)))
 
         # feature 4: Explosion radius. Should include whose turn it is into this
-        for i in range(64):
-            sum = 0
-            if state.board[i] != 0:
-                for j in s.boom_radius(i):
-                    sum += state.board[j]
-                value += 70 * (state.board[i] - sum)
+        # for i in range(64):
+        #     sum = 0
+        #     if state.board[i] != 0:
+        #         for j in s.boom_radius(i):
+        #             sum += state.board[j]
+        #         value += 10 * (state.board[i] - sum)
+
         return value
 
     def __init__(self, color):

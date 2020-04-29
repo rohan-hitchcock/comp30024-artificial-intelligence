@@ -4,26 +4,27 @@ import itertools
 BLACK_COLOR = "black"
 WHITE_COLOR = "white"
 
-#strings identifying move and boom actions
+# strings identifying move and boom actions
 MOVE_ACTION = "MOVE"
 BOOM_ACTION = "BOOM"
 
-#the x/y length of the board
+# the x/y length of the board
 BOARD_SIZE = 8
 
-#explosion radius
+# explosion radius
 ER = 1
 
-#the starting board in a flattened byte array when positive entries are white 
+# the starting board in a flattened byte array when positive entries are white
 # stacks and negative entries are black stacks
-BOARD_START = np.array([ 1,  1,  0,  1,  1,  0,  1,  1,  1,  1,  0,  1,  1,  0, 
-                         1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  
-                         0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  
-                         0,  0,  0,  0,  0,  0, -1, -1,  0, -1, -1,  0, -1, -1, 
-                        -1, -1,  0, -1, -1,  0, -1, -1], dtype=np.int8)
+BOARD_START = np.array([1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0,
+                        1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                        0, 0, 0, 0, 0, 0, -1, -1, 0, -1, -1, 0, -1, -1,
+                        -1, -1, 0, -1, -1, 0, -1, -1], dtype=np.int8)
 
-#for debugging
+# for debugging
 BOARD_EMPTY = np.zeros(BOARD_SIZE ** 2, dtype=np.int8)
+
 
 class State:
     """ Represents a state of the game
@@ -48,7 +49,7 @@ class State:
         board_2d = np.reshape(self.board, (BOARD_SIZE, BOARD_SIZE))
         out = ""
         for y, row in reversed(list(enumerate(board_2d))):
-            
+
             out += f" {y} |"
 
             for h in row:
@@ -86,12 +87,12 @@ class State:
                 A new State object which is the result of executing the move on
                 this state object.
         """
-        #opponent stacks are stored as negative values
+        # opponent stacks are stored as negative values
         if opponent:
-            num_tokens = -num_tokens    
+            num_tokens = -num_tokens
 
         next_board = self.board.copy()
-        
+
         next_board[si] -= num_tokens
         next_board[ei] += num_tokens
         return State(next_board)
@@ -113,49 +114,87 @@ class State:
 
         to_boom = {i}
         while to_boom:
-
             boom = to_boom.pop()
 
-            #remove piece
+            # remove piece
             next_board[boom] = 0
 
-            #set all token indexes (the non-zero entries of board) in radius to boom
+            # set all token indexes (the non-zero entries of board) in radius to boom
             radius = boom_radius(boom)
             to_boom.update(radius[next_board[radius] != 0])
 
         return State(next_board)
 
+    # def next_states(self, opponent):
+    #     """ A generator for the states accessible from this state via valid moves.
+    #
+    #         Produces the State as well as an identifier for the action taken.
+    #
+    #         Args:
+    #             opponent: set to True if the opponent is making the move.
+    #
+    #         Yields:
+    #             tuples of the form (name, state) where name is the identifier
+    #             of the action and state is the State object resulting from the
+    #             action.
+    #     """
+    #     #get the indexes of the stacks of the player making the move
+    #     stacks = np.flatnonzero(self.board < 0) if opponent else np.flatnonzero(self.board > 0)
+    #
+    #     for si in stacks:
+    #
+    #         # The boom move. If the opponent is moving it is simplest to include
+    #         #this move every time (although optimising here is worth looking into)
+    #         #if we are moving it never makes sense to boom a token if it does
+    #         #not remove at least one oponent token from the board
+    #         if opponent:
+    #             yield boom_name(si), self.boom(si)
+    #         elif any(pos < 0 for pos in self.board[boom_radius(si)]):
+    #             yield boom_name(si), self.boom(si)
+    #
+    #         height = abs(self.board[si])
+    #
+    #         for to_i in move_positions(si, height):
+    #             #checks if to_i is either empty or the same color as si
+    #             if self.board[to_i] * self.board[si] >= 0:
+    #                 yield from ((move_name(n, si, to_i), self.move(n, si, to_i, opponent))
+    #                             for n in range(1, height+1))
+
     def next_states(self, opponent):
         """ A generator for the states accessible from this state via valid moves.
-        
+
             Produces the State as well as an identifier for the action taken.
-            
+
             Args:
                 opponent: set to True if the opponent is making the move.
-                
+
             Yields:
-                tuples of the form (name, state) where name is the identifier 
-                of the action and state is the State object resulting from the 
+                tuples of the form (name, state) where name is the identifier
+                of the action and state is the State object resulting from the
                 action.
         """
-        #get the indexes of the stacks of the player making the move
+        # get the indexes of the stacks of the player making the move
         stacks = np.flatnonzero(self.board < 0) if opponent else np.flatnonzero(self.board > 0)
 
         for si in stacks:
-            
+
             # The boom move. If the opponent is moving it is simplest to include
-            #this move every time (although optimising here is worth looking into)
-            #if we are moving it never makes sense to boom a token if it does 
-            #not remove at least one oponent token from the board
-            if opponent:
+            # this move every time (although optimising here is worth looking into)
+            # if we are moving it never makes sense to boom a token if it does
+            # not remove at least one oponent token from the board
+            # if opponent:
+            #     yield boom_name(si), self.boom(si)
+            if not opponent and any(pos < 0 for pos in self.board[boom_radius(si)]):
                 yield boom_name(si), self.boom(si)
-            elif any(pos < 0 for pos in self.board[boom_radius(si)]):
+            if opponent and any(pos > 0 for pos in self.board[boom_radius(si)]):
                 yield boom_name(si), self.boom(si)
+
+        for si in stacks:
 
             height = abs(self.board[si])
 
             for to_i in move_positions(si, height):
-                #checks if to_i is either empty or the same color as si
+                # checks if to_i is either empty or the same color as si
                 if self.board[to_i] * self.board[si] >= 0:
                     yield from ((move_name(n, si, to_i), self.move(n, si, to_i, opponent))
                                 for n in range(1, height + 1))
@@ -178,9 +217,11 @@ class State:
         elif color == WHITE_COLOR:
             return State(BOARD_START)
 
+
 def ptoi(x, y):
     """ Converts a board position to a board index """
     return x + BOARD_SIZE * y
+
 
 def itop(i):
     """ Converts a board index to a board coordinate """
@@ -200,11 +241,12 @@ def boom_radius(i):
 
     poss = [(x0 - 1, y0 - 1), (x0 - 1, y0), (x0 - 1, y0 + 1),
             (x0, y0 - 1), (x0, y0 + 1),
-            (x0 + 1, y0 - 1), (x0 + 1, y0), (x0 + 1, y0 + 1)] 
-    
+            (x0 + 1, y0 - 1), (x0 + 1, y0), (x0 + 1, y0 + 1)]
+
     return np.array([
         ptoi(x, y) for x, y in poss if 0 <= x < BOARD_SIZE and 0 <= y < BOARD_SIZE
     ])
+
 
 def move_positions(stack_i, height):
     """ Finds the board indexes which a stack at board index stack_i can move to
@@ -221,19 +263,21 @@ def move_positions(stack_i, height):
     x0, y0 = itop(stack_i)
 
     # iterate over move distances
-    for d in range(1, height + 1):
-        
+    for d in range(height, 0, -1):
+
         if 0 <= y0 - d: mp.append(ptoi(x0, y0 - d))
         if BOARD_SIZE > y0 + d: mp.append(ptoi(x0, y0 + d))
         if 0 <= x0 - d: mp.append(ptoi(x0 - d, y0))
         if BOARD_SIZE > x0 + d: mp.append(ptoi(x0 + d, y0))
-    
+
     return np.array(mp)
+
 
 def move_name(num_tokens, si, ei):
     """ Gets the identifier for a move sending num_tokens from board index si 
         to board index ei """
     return (MOVE_ACTION, num_tokens, itop(si), itop(ei))
+
 
 def boom_name(i):
     """ Gets the identifier for a boom at board index i"""
