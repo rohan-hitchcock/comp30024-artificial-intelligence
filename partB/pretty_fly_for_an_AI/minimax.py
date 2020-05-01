@@ -3,7 +3,6 @@ def minimax(state, depth, ev):
     beta = float("inf")
 
     max_val = -float("inf")
-    # print(list(state.next_states(opponent=False)))
     for mv, st in state.next_states(opponent=False):
 
         val = minimax_min(st, depth - 1, ev, alpha, beta)
