@@ -65,4 +65,4 @@ def dpartial_eval(state, weights, i):
 
 def dpartial_reward(state, weights, i):
     return dpartial_eval(state, weights, i) * (
-                1 - (tanh_evaluation_function(state, weights) * tanh_evaluation_function(state, weights)))
+                1 - (tanh_evaluation_function(state, weights) ** 2))
