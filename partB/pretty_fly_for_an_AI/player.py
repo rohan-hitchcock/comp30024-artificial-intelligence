@@ -72,6 +72,7 @@ class Player:
         #             sum += state.board[j]
         #         value += 10 * (state.board[i] - sum)
 
+
     def __init__(self, color):
         """
         This method is called once at the beginning of the game to initialise
