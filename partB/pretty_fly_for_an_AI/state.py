@@ -22,7 +22,8 @@ BOARD_START = np.array([ 1,  1,  0,  1,  1,  0,  1,  1,  1,  1,  0,  1,  1,  0,
                          0,  0,  0,  0,  0,  0, -1, -1,  0, -1, -1,  0, -1, -1, 
                         -1, -1,  0, -1, -1,  0, -1, -1], dtype=np.int8)
 
-#for debugging
+
+#empty board, for debugging
 BOARD_EMPTY = np.zeros(BOARD_SIZE ** 2, dtype=np.int8)
 
 class State:
@@ -241,4 +242,23 @@ def boom_name(i):
 
 
 if __name__ == "__main__":
-    pass
+    
+    pos = (4, 4)
+    height = 4
+
+    pos2 = (3, 3)
+    height2 = 3
+    
+
+    board = BOARD_EMPTY.copy()
+
+
+    board[ptoi(*pos)] = height 
+    board[ptoi(*pos2)] = -height2
+
+    s = State(board)
+
+    print(s)
+    for mv, ns in s.next_states(opponent=True):
+        print(f"Action: {mv}")
+        print(str(ns))
