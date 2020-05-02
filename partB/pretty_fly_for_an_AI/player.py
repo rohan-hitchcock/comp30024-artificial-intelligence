@@ -4,6 +4,7 @@ from pretty_fly_for_an_AI.minimax import alpha_beta_search as minimax
 from collections import defaultdict as dd
 from math import ceil
 
+
 class Player:
     minimax_depth = 3
 
@@ -51,6 +52,7 @@ class Player:
         #         value += 10 * (state.board[i] - sum)
 
         return value
+
 
     def __init__(self, color):
         """
@@ -113,4 +115,3 @@ class Player:
 
 if __name__ == "__main__":
     pass
-

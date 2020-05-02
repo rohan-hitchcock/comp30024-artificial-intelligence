@@ -2,11 +2,12 @@ def minimax(state, depth, ev):
     alpha = -float("inf")
     beta = float("inf")
 
+
     max_val = -float("inf")
     for mv, st in state.next_states(opponent=False):
 
         val = minimax_min(st, depth - 1, ev, alpha, beta)
-
+    
         if val >= max_val:
             best_move = mv
             max_val = val
@@ -14,22 +15,20 @@ def minimax(state, depth, ev):
         alpha = max(alpha, max_val)
 
     return best_move
-
-
+  
 def minimax_max(state, depth, ev, alpha, beta):
     if depth == 0 or state.is_gameover():
         return ev(state)
 
-    max_val = -float("inf")
+    max_val = -float("inf")  
     for mv, child_state in state.next_states(opponent=False):
 
         max_val = max(max_val, minimax_min(child_state, depth - 1, ev, alpha, beta))
         alpha = max(alpha, max_val)
-
+        
         if beta <= alpha:
             return max_val
     return max_val
-
 
 def minimax_min(state, depth, ev, alpha, beta):
     if depth == 0 or state.is_gameover():
@@ -46,9 +45,7 @@ def minimax_min(state, depth, ev, alpha, beta):
 
     return min_val
 
-
-
-
+  
 # New Implementation. Not sure If it works either.
 def alpha_beta_search(state, depth, ev):
     alpha = -float("inf")
@@ -102,7 +99,6 @@ def min_value(state, depth, ev, alpha, beta):
         beta = min(beta, v)
     # print("summary min: v= " + str(v) + " from: " + str(child) + " on move: " + str(move))
     return v, move
-
 
 if __name__ == "__main__":
     pass
