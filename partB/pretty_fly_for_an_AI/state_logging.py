@@ -1,17 +1,13 @@
 import numpy as np
+import itertools
 
 class StateLogger():
 
     def __init__(self):
-        self.states = []
+        self.counter = itertools.count()
 
     def add(self, state):
-        self.states.append(state.board)
 
-    def save(self, path):
-        np.save(path, np.array(self.states))
-
-
-
-
+        outfile = "./pretty_fly_for_an_AI/ml_logging/" + str(next(self.counter)) +".npy"
+        np.save(outfile, state)
 

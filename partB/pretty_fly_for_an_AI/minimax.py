@@ -107,7 +107,7 @@ def min_value(state, depth, ev, alpha, beta):
 def alpha_beta_search_ml(state, depth, ev, ml_logger):
     alpha = -float("inf")
     beta = float("inf")
-    v, mv, pred_state = max_value(state, depth, ev, alpha, beta)
+    v, mv, pred_state = max_value_ml(state, depth, ev, alpha, beta)
     ml_logger.add(pred_state)
     return mv
 
