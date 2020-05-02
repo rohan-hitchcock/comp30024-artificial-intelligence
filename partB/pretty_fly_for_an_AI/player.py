@@ -1,14 +1,58 @@
 import numpy as np
 from pretty_fly_for_an_AI import state as s
-from pretty_fly_for_an_AI.minimax import minimax
+from pretty_fly_for_an_AI.minimax import alpha_beta_search as minimax
+from collections import defaultdict as dd
+from math import ceil
 
 
 class Player:
-
-
     minimax_depth = 3
 
-    evaluation_function = lambda state: np.sum(state.board[state.board > 0]) + 2 * np.sum(state.board[state.board < 0])
+    evaluation_function = lambda state: Player.new_eval(state)
+
+    @staticmethod
+    def manhattan(pos1, pos2):
+        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+
+    @staticmethod
+    def new_eval(state):
+
+        value = 0
+
+        ours = state.board[state.board > 0]
+        theirs = state.board[state.board < 0]
+        rest = state.board[state.board == 0]
+        diff = (np.sum(ours) + np.sum(theirs))
+
+        # feature 1: Number of pieces for each player
+        value += 50 * diff * diff * np.sign(diff)
+        value -= 4 * len(ours)
+        value += 4 * len(rest)
+
+        #feature: winning
+        if len(theirs) == 0:
+            value += 100000
+
+        # feature 2: Number of available moves
+        # value += w_f2 * len(list(state.next_states(opponent=False)))
+        # value -= b_f2 * len(list(state.next_states(opponent=True)))
+
+        # feature 3: Distance to middle of the board. Late game
+        if len(rest) > 59:
+            for i in state.board:
+                if i > 0:
+                    value -= ceil(10*state.board[i]*Player.manhattan(s.itop(i), (3, 4)))
+
+        # feature 4: Explosion radius. Should include whose turn it is into this
+        # for i in range(64):
+        #     sum = 0
+        #     if state.board[i] != 0:
+        #         for j in s.boom_radius(i):
+        #             sum += state.board[j]
+        #         value += 10 * (state.board[i] - sum)
+
+        return value
+
 
     def __init__(self, color):
         """
@@ -54,20 +98,20 @@ class Player:
         for the player colour (your method does not need to validate the action
         against the game rules).
         """
-        
+
         action_type, data = action[0], action[1:]
 
-        #check if this is an opponents move
+        # check if this is an opponents move
         opponent = self.color != color
 
         if action_type == s.MOVE_ACTION:
-            
+
             n, sp, ep = data
             self.state = self.state.move(n, s.ptoi(*sp), s.ptoi(*ep), opponent)
         else:
-            
+
             pos = data[0]
             self.state = self.state.boom(s.ptoi(*pos))
-    
+
 if __name__ == "__main__":
     pass
