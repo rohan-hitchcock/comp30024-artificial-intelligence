@@ -1,4 +1,4 @@
-from math import ceil
+from math import ceil, tanh
 import numpy as np
 
 
@@ -10,7 +10,7 @@ def evaluation_function(state, weights):
     value = 0
     for i in range(len(weights)):
         value += weights[i] * dpartial_reward(state, weights, i)
-    return value
+    return tanh(value)
 
 
 def dpartial_reward(state, weights, i):
