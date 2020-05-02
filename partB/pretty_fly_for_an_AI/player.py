@@ -1,8 +1,14 @@
 import numpy as np
-from pretty_fly_for_an_AI import state as s
+from pretty_fly_for_an_AI import state 
 from pretty_fly_for_an_AI.minimax import alpha_beta_search as minimax
+#from pretty_fly_for_an_AI.minimax import alpha_beta_search_ml as minimax_ml
+from pretty_fly_for_an_AI.state_logging import StateLogger
+
+
 from collections import defaultdict as dd
 from math import ceil
+
+WEIGHTS_FILE = "weights.npy"
 
 
 class Player:
@@ -15,13 +21,13 @@ class Player:
         return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
     @staticmethod
-    def new_eval(state):
+    def new_eval(s):
 
         value = 0
 
-        ours = state.board[state.board > 0]
-        theirs = state.board[state.board < 0]
-        rest = state.board[state.board == 0]
+        ours = s[s > 0]
+        theirs = s[s < 0]
+        rest = s[s == 0]
         diff = (np.sum(ours) + np.sum(theirs))
 
         # feature 1: Number of pieces for each player
@@ -39,9 +45,9 @@ class Player:
 
         # feature 3: Distance to middle of the board. Late game
         if len(rest) > 59:
-            for i in state.board:
+            for i in s:
                 if i > 0:
-                    value -= ceil(10*state.board[i]*Player.manhattan(s.itop(i), (3, 4)))
+                    value -= ceil(10*s[i]*Player.manhattan(state.itop(i), (3, 4)))
 
         # feature 4: Explosion radius. Should include whose turn it is into this
         # for i in range(64):
@@ -65,7 +71,7 @@ class Player:
         program will play as (White or Black). The value will be one of the 
         strings "white" or "black" correspondingly.
         """
-        self.state = s.State.create_start_state(color)
+        self.state = state.create_start_state(color)
 
         self.color = color
 
@@ -104,14 +110,14 @@ class Player:
         # check if this is an opponents move
         opponent = self.color != color
 
-        if action_type == s.MOVE_ACTION:
+        if action_type == state.MOVE_ACTION:
 
             n, sp, ep = data
-            self.state = self.state.move(n, s.ptoi(*sp), s.ptoi(*ep), opponent)
+            self.state = state.move(self.state, n, state.ptoi(*sp), state.ptoi(*ep), opponent)
         else:
 
             pos = data[0]
-            self.state = self.state.boom(s.ptoi(*pos))
+            self.state = state.boom(self.state, state.ptoi(*pos))
 
 if __name__ == "__main__":
     pass
