@@ -9,4 +9,4 @@ venv/
 *__pycache__/
 *.DS_Store
 
-./partB/pretty_fly_for_an_AI/ml_logging
+./partB/pretty_fly_for_an_AI/ml_logging/
