@@ -6,14 +6,14 @@ def manhattan(pos1, pos2):
     return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
 
-def evaluation_function(state, weights):
+def tanh_evaluation_function(state, weights):
     value = 0
     for i in range(len(weights)):
         value += weights[i] * dpartial_reward(state, weights, i)
     return tanh(value)
 
 
-def dpartial_reward(state, weights, i):
+def dpartial_eval(state, weights, i):
     # using if statements to avoid calculating things we dont need
     if i == 0:
         # Similar to a tan function in shape, as the difference between our tokens and theirs grows, were
@@ -61,3 +61,8 @@ def dpartial_reward(state, weights, i):
     #         for j in s.boom_radius(i):
     #             sum += state.board[j]
     #         value += 10 * (state.board[i] - sum)
+
+
+def dpartial_reward(state, weights, i):
+    return dpartial_eval(state, weights, i) * (
+                1 - (tanh_evaluation_function(state, weights) * tanh_evaluation_function(state, weights)))
