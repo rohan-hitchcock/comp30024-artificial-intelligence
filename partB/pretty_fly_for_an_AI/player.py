@@ -2,12 +2,13 @@ import numpy as np
 from pretty_fly_for_an_AI import state as s
 from pretty_fly_for_an_AI.minimax import minimax
 
+
 class Player:
 
 
     minimax_depth = 3
 
-    evaluation_function = lambda state : np.sum(state.board)
+    evaluation_function = lambda state: np.sum(state.board[state.board > 0]) + 2 * np.sum(state.board[state.board < 0])
 
     def __init__(self, color):
         """
@@ -67,4 +68,6 @@ class Player:
             
             pos = data[0]
             self.state = self.state.boom(s.ptoi(*pos))
-            
+    
+if __name__ == "__main__":
+    pass

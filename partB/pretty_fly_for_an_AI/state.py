@@ -22,6 +22,7 @@ BOARD_START = np.array([ 1,  1,  0,  1,  1,  0,  1,  1,  1,  1,  0,  1,  1,  0,
                          0,  0,  0,  0,  0,  0, -1, -1,  0, -1, -1,  0, -1, -1, 
                         -1, -1,  0, -1, -1,  0, -1, -1], dtype=np.int8)
 
+
 #empty board, for debugging
 BOARD_EMPTY = np.zeros(BOARD_SIZE ** 2, dtype=np.int8)
 
