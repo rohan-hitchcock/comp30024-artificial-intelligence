@@ -8,6 +8,8 @@ from pretty_fly_for_an_AI.minimax import alpha_beta_search_ml as minimax_ml
 from pretty_fly_for_an_AI.state_logging import StateLogger
 from pretty_fly_for_an_AI.evaluation import reward
 
+from math import ceil
+
 
 
 WEIGHTS_FILE = "./pretty_fly_for_an_AI/weights.npy"
@@ -15,8 +17,50 @@ WEIGHTS_FILE = "./pretty_fly_for_an_AI/weights.npy"
 class Player:
     minimax_depth = 3
 
+    evaluation_function = lambda state: Player.new_eval(state)
 
-    evaluation_function = lambda state, weights: ev.evaluation_function(state, weights)
+    @staticmethod
+    def manhattan(pos1, pos2):
+        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+
+    @staticmethod
+    def new_eval(s):
+
+        value = 0
+
+        ours = s[s > 0]
+        theirs = s[s < 0]
+        rest = s[s == 0]
+        diff = (np.sum(ours) + np.sum(theirs))
+
+        # feature 1: Number of pieces for each player
+        value += 50 * diff * diff * np.sign(diff)
+        value -= 4 * len(ours)
+        value += 4 * len(rest)
+
+        # feature: winning
+        if len(theirs) == 0:
+            value += 100000
+
+        # feature 2: Number of available moves
+        # value += w_f2 * len(list(state.next_states(opponent=False)))
+        # value -= b_f2 * len(list(state.next_states(opponent=True)))
+
+        # feature 3: Distance to middle of the board. Late game
+        if len(rest) > 59:
+            for i in s:
+                if i > 0:
+                    value -= ceil(10 * s[i] * Player.manhattan(state.itop(i), (3, 4)))
+
+        # feature 4: Explosion radius. Should include whose turn it is into this
+        # for i in range(64):
+        #     sum = 0
+        #     if state.board[i] != 0:
+        #         for j in s.boom_radius(i):
+        #             sum += state.board[j]
+        #         value += 10 * (state.board[i] - sum)
+
+        return value
 
 
     def __init__(self, color):

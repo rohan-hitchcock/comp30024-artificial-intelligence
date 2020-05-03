@@ -19,8 +19,8 @@ def reward(state, weights):
         if np.all(state >= 0):
             return 1
         return -1
-
-    return tanh(sum(w * feature_val(state, i) for i, w in enumerate(weights)))
+    # print(tanh(0.001*sum(w * feature_val(state, i) for i, w in enumerate(weights))))
+    return tanh(0.001*sum(w * feature_val(state, i) for i, w in enumerate(weights)))
 
 
 def feature_val(state, i):
