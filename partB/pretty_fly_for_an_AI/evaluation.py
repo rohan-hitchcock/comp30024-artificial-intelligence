@@ -1,43 +1,57 @@
 from math import ceil, tanh
 import numpy as np
 
+try:
+    from pretty_fly_for_an_AI import state as st
+except ModuleNotFoundError:
+    import state as st
+
 
 def manhattan(pos1, pos2):
     return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
 
-def tanh_evaluation_function(state, weights):
-    value = 0
-    for i in range(len(weights)):
-        value += weights[i] * dpartial_reward(state, weights, i)
-    return tanh(value)
+def reward(state, weights):
+    # revert to utility function if the game is over
+    if st.is_gameover(state):
+        if np.all(state == 0):
+            return 0
+        if np.all(state >= 0):
+            return 1
+        return -1
+
+    return tanh(sum(w * feature_val(state, i) for i, w in enumerate(weights)))
 
 
-def dpartial_eval(state, weights, i):
+def feature_val(state, i):
     # using if statements to avoid calculating things we dont need
     if i == 0:
         # Similar to a tan function in shape, as the difference between our tokens and theirs grows, were
         # greater encouraged to take their tokens
-        ours = state.board[state.board > 0]
-        theirs = state.board[state.board < 0]
+
+        ours = state[state > 0]
+        theirs = state[state < 0]
         diff = (np.sum(ours) + np.sum(theirs))
+
         return diff * diff * np.sign(diff)
 
     elif i == 1:
         # Should have negative weight, encourages us to stack
-        return len(state.board[state.board > 0])
+        return np.count_nonzero(state > 0)
 
     elif i == 2:
         # Also encourages us to stack, but also encourages us to remove their tokens. My idea was that this might
         # come into play when we have more tokens, but want to sacrifice 1 for 1. A move like this isnt directly
         # rewarded
-        return len(state.board[state.board == 0])
+
+        return 64 - np.count_nonzero(state)
 
     elif i == 3:
         # The reward for winning. Shifted inverse function. 0.1 and 10 chosen so that, for x = [1 --> 12],
         # y = [0.01 --> 0.008] but for x = 0, y = 10. Thus if the weight is 1000, the reward for winning is
         # 10000, but only 10 when the opposition has 1 token.
-        return ceil(1 / (0.1 + 10 * len(state.board[state.board < 0])))
+
+        return ceil(1 / (0.1 + 10 * np.count_nonzero(state < 0)))
 
     # ------------------- FEATURES TO KEEP IN MIND ------------------ #
 
@@ -64,5 +78,5 @@ def dpartial_eval(state, weights, i):
 
 
 def dpartial_reward(state, weights, i):
-    return dpartial_eval(state, weights, i) * (
-                1 - (tanh_evaluation_function(state, weights) ** 2))
+    return feature_val(state, i) * (
+            1 - (reward(state, weights) ** 2))
