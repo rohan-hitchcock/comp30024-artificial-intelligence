@@ -38,7 +38,7 @@ BOARD_EMPTY = np.zeros(BOARD_SIZE ** 2, dtype=np.int8)
 
 
 def to_string(s):
-    board_2d = np.reshape(s.board, (BOARD_SIZE, BOARD_SIZE))
+    board_2d = np.reshape(s, (BOARD_SIZE, BOARD_SIZE))
     out = ""
     for y, row in reversed(list(enumerate(board_2d))):
 
