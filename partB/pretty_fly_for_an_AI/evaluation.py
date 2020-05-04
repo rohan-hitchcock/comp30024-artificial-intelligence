@@ -53,6 +53,12 @@ def feature_val(state, i):
 
         return ceil(1 / (0.1 + 10 * np.count_nonzero(state < 0)))
 
+    elif i == 4:
+        # The reward for winning. Shifted inverse function. 0.1 and 10 chosen so that, for x = [1 --> 12],
+        # y = [0.01 --> 0.008] but for x = 0, y = 10. Thus if the weight is 1000, the reward for winning is
+        # 10000, but only 10 when the opposition has 1 token.
+
+        return ceil(1 / (0.1 + 10 * np.count_nonzero(state > 0)))
     # ------------------- FEATURES TO KEEP IN MIND ------------------ #
 
     # Encourages the player to move to the centre of the board when there are little stacks remaining.
