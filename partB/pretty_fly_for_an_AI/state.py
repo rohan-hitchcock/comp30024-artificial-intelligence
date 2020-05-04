@@ -1,4 +1,5 @@
 import numpy as np
+from math import ceil
 import itertools
 
 BLACK_COLOR = "black"
@@ -22,9 +23,8 @@ BOARD_START = np.array([1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0,
                         0, 0, 0, 0, 0, 0, -1, -1, 0, -1, -1, 0, -1, -1,
                         -1, -1, 0, -1, -1, 0, -1, -1], dtype=np.int8)
 
-#empty board, for debugging
+# empty board, for debugging
 BOARD_EMPTY = np.zeros(BOARD_SIZE ** 2, dtype=np.int8)
-
 
 """ Represents a state of the game
 
@@ -58,7 +58,6 @@ def to_string(s):
     out += "y/x|  0 |  1 |  2 |  3 |  4 |  5 |  6 |  7 |\n"
     return out
 
-    
 
 def move(s, num_tokens, si, ei, opponent):
     """ Returns a new state object which is the result of applying move.
@@ -85,6 +84,7 @@ def move(s, num_tokens, si, ei, opponent):
     next_state[si] -= num_tokens
     next_state[ei] += num_tokens
     return next_state
+
 
 def boom(s, i):
     """ Returns a new state object which is the result of the token at pos
@@ -115,41 +115,77 @@ def boom(s, i):
 
     return next_board
 
-# def next_states(s, opponent):
-#     """ A generator for the states accessible from this state via valid moves.
-#
-#         Produces the State as well as an identifier for the action taken.
-#
-#         Args:
-#             s: the board state
-#             opponent: set to True if the opponent is making the move.
-#
-#         Yields:
-#             tuples of the form (name, state) where name is the identifier
-#             of the action and state is the State object resulting from the
-#             action.
-#     """
-#     #get the indexes of the stacks of the player making the move
-#     stacks = np.flatnonzero(s < 0) if opponent else np.flatnonzero(s > 0)
-#
-#     for si in stacks:
-#
-#         # The boom move. If the opponent is moving it is simplest to include
-#         #this move every time (although optimising here is worth looking into)
-#         #if we are moving it never makes sense to boom a token if it does
-#         #not remove at least one oponent token from the board
-#         if opponent:
-#             yield boom_name(si), boom(s, si)
-#         elif any(pos < 0 for pos in s[boom_radius(si)]):
-#             yield boom_name(si), boom(s, si)
-#
-#         height = abs(s[si])
-#
-#         for to_i in move_positions(si, height):
-#             #checks if to_i is either empty or the same color as si
-#             if s[to_i] * s[si] >= 0:
-#                 yield from ((move_name(n, si, to_i), move(s, n, si, to_i, opponent))
-#                             for n in range(1, height+1))
+
+def move_positions_end(stack_i, height):
+    """ Finds the board indexes which a stack at board index stack_i can move to
+
+        Args:
+            stack_i: a board index of the stack
+            height: the height of the stack
+
+        Returns:
+            The board indexes which stack_i may move to
+    """
+    mp = []
+
+    x0, y0 = itop(stack_i)
+
+    # iterate over move distances
+    # Moves generated from furthest first to closest last
+    if height > 1:
+        moves = [height, ceil(height / 2)]
+    else:
+        moves = [1]
+
+    for d in moves:
+
+        if 0 <= y0 - d: mp.append(ptoi(x0, y0 - d))
+        if BOARD_SIZE > y0 + d: mp.append(ptoi(x0, y0 + d))
+        if 0 <= x0 - d: mp.append(ptoi(x0 - d, y0))
+        if BOARD_SIZE > x0 + d: mp.append(ptoi(x0 + d, y0))
+
+    return np.array(mp)
+
+
+def next_states_end(s, opponent):
+    """ A generator for the states accessible from this state via valid moves.
+
+        Produces the State as well as an identifier for the action taken.
+
+        Args:
+            s: the board state
+            opponent: set to True if the opponent is making the move.
+
+        Yields:
+            tuples of the form (name, state) where name is the identifier
+            of the action and state is the State object resulting from the
+            action.
+    """
+    # get the indexes of the stacks of the player making the move
+    stacks = np.flatnonzero(s < 0) if opponent else np.flatnonzero(s > 0)
+
+    # All moves generated first
+    for si in stacks:
+
+        height = abs(s[si])
+
+        for to_i in move_positions_end(si, height):
+            # checks if to_i is either empty or the same color as si
+            if s[to_i] * s[si] >= 0:
+                # Moves generated from moving least first, to moving all last.
+                yield from ((move_name(n, si, to_i), move(s, n, si, to_i, opponent))
+                            for n in [height, 1])
+
+    # All booms generated second
+    for si in stacks:
+
+        # Assumes that opponent also wont blow up. If it does, thats fine but dont need to generate the move.
+        if not opponent and any(pos < 0 for pos in s[boom_radius(si)]):
+            yield boom_name(si), boom(s, si)
+        if opponent and any(pos > 0 for pos in s[boom_radius(si)]):
+            yield boom_name(si), boom(s, si)
+
+
 
 def next_states(s, opponent):
     """ A generator for the states accessible from this state via valid moves.
@@ -187,6 +223,7 @@ def next_states(s, opponent):
                 # Moves generated from moving least first, to moving all last.
                 yield from ((move_name(n, si, to_i), move(s, n, si, to_i, opponent))
                             for n in range(1, height + 1))
+
 
 def is_gameover(s):
     return np.all(s >= 0) or np.all(s <= 0)

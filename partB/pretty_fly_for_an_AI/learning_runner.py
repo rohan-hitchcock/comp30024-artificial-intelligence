@@ -15,7 +15,7 @@ def load_states_to_numpy(dirpth):
 
 
 TEMP_DISCOUNT = 0.7
-LEARNING_RATE = 0.07
+LEARNING_RATE = 0.09
 
 parser = argparse.ArgumentParser(description="For training a player.")
 
@@ -37,18 +37,18 @@ for i in range(args.num_iterations):
         print(f"Playing as: {color_str}")
 
     if as_white:
-        to_run = ["python3", "-m", "referee", "-v0",
+        to_run = ["python3", "-m", "referee",
                   "pretty_fly_for_an_AI:LearnerPlayer",
                   "pretty_fly_for_an_AI:" + args.opponent]
     else:
-        to_run = ["python3", "-m", "referee", "-v0",
+        to_run = ["python3", "-m", "referee",
                   "pretty_fly_for_an_AI:" + args.opponent,
                   "pretty_fly_for_an_AI:LearnerPlayer"]
 
     result = subprocess.run(to_run, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
     #new verbose stuff. alernatives that are a bit nicer use subprocess.catch_output or something rather than run
-    if result.stdout.decode('utf-8').__contains__('draw detected: game state occurred 4 times.'):
+    # if result.stdout.decode('utf-8').__contains__('draw detected: game state occurred 4 times.'):
         #do something
 
     if args.verbose:
