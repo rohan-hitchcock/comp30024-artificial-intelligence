@@ -173,6 +173,10 @@ def next_states_end(s, opponent):
             # checks if to_i is either empty or the same color as si
             if s[to_i] * s[si] >= 0:
                 # Moves generated from moving least first, to moving all last.
+                if height == 1:
+                    amount = [1]
+                else:
+                    amount = [height, 1]
                 yield from ((move_name(n, si, to_i), move(s, n, si, to_i, opponent))
                             for n in [height, 1])
 

@@ -15,7 +15,7 @@ def load_states_to_numpy(dirpth):
 
 
 TEMP_DISCOUNT = 0.7
-LEARNING_RATE = 0.09
+LEARNING_RATE = 0.1
 
 parser = argparse.ArgumentParser(description="For training a player.")
 
