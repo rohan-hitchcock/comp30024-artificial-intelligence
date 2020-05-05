@@ -12,7 +12,7 @@ WEIGHTS_FILE = "./pretty_fly_for_an_AI/weights_pv0.npy"
 class PlayerV0:
     minimax_depth = 3
 
-    evaluation_function = lambda state: Player.new_eval(state)
+    evaluation_function = lambda state: PlayerV0.new_eval(state)
 
     @staticmethod
     def manhattan(pos1, pos2):
@@ -82,7 +82,7 @@ class PlayerV0:
         return an allowed action to play on this turn. The action must be
         represented based on the spec's instructions for representing actions.
         """
-        return minimax(self.state, depth=Player.minimax_depth, ev=Player.evaluation_function)
+        return minimax(self.state, depth=PlayerV0.minimax_depth, ev=PlayerV0.evaluation_function)
 
     def update(self, color, action):
         """

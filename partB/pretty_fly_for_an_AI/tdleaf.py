@@ -24,7 +24,7 @@ def tdleaf_update(weights, pred_states, reward, dpartial_reward, temporal_discou
 
     tds = np.array(
         [reward(s1, weights) - reward(s0, weights) 
-        for s1, s0 in zip(pred_states, pred_states[1:])
+        for s0, s1 in zip(pred_states, pred_states[1:])
     ])
 
     discounted_tds = np.array(
@@ -45,7 +45,7 @@ def tdleaf_update_simple(weights, pred_states, reward, dpartial_reward, temporal
 
     tds = np.array(
         [reward(s1, weights) - reward(s0, weights) 
-        for s1, s0 in zip(pred_states, pred_states[1:])
+        for s0, s1 in zip(pred_states, pred_states[1:])
     ])
 
     new_weights = weights.copy()

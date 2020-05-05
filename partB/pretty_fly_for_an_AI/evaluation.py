@@ -29,23 +29,38 @@ def feature(state):
     ours_pos = np.flatnonzero(ours_idx)
     theirs_pos = np.flatnonzero(theirs_idx)
 
-    
-    our_com = sum(np.array(st.itop(p)) for p in ours_pos) / len(ours_pos)
+    if len(ours_pos) == 0:
+        our_com_to_center = 0
+        our_com_to_theirs = 0
+    else:
+
+        our_com = sum(np.array(st.itop(p)) for p in ours_pos) / len(ours_pos)
+
+        our_com_to_center = manhattan(our_com, (4, 4))
+
+        if len(theirs_pos) == 0:
+            our_com_to_theirs = 0
+
+        else:
+
+            their_com = sum(np.array(st.itop(p)) for p in theirs_pos) / len(theirs_pos)
+
+            our_com_to_theirs = manhattan(our_com, their_com)
         
-    their_com = sum(np.array(st.itop(p)) for p in theirs_pos) / len(theirs_pos)
+    
 
     return [
         ((np.sum(state[ours_idx]) + np.sum(state[theirs_idx])) ** 3) / 1728, 
-        manhattan(our_com, their_com) / 16, 
-        manhattan(our_com, (4, 4)) / 8, 
+        1 - our_com_to_center / 16, 
+        1 - our_com_to_theirs / 8, 
         np.count_nonzero(state == 1) / 12,
-        np.count_nonzero(state == 2) / 12,
-        np.count_nonzero(state == 3) / 12,
-        np.count_nonzero(state == 4) / 12,
-        np.count_nonzero(state == 5) / 12,
-        np.count_nonzero(state == 6) / 12,
-        np.count_nonzero(state == 7) / 12,
-        np.count_nonzero(state >= 8) / 12,
+        np.count_nonzero(state == 2) / 6,
+        np.count_nonzero(state == 3) / 4,
+        np.count_nonzero(state == 4) / 3,
+        np.count_nonzero(state == 5) * (5 / 12),
+        np.count_nonzero(state == 6) * (1 / 2),
+        np.count_nonzero(state == 7) * (7 / 12),
+        np.count_nonzero(state >= 8) * (2 / 3)
     ]
 
 def dpartial_reward(state, weights, i):
@@ -53,48 +68,7 @@ def dpartial_reward(state, weights, i):
     if st.is_gameover(state) and (i == 1 or i == 2):
         return 0
 
-
-    if i == 0:
-
-        ours_idx = state > 0
-        theirs_idx = state < 0
-        fv = ((np.sum(state[ours_idx]) + np.sum(state[theirs_idx])) ** 3) / 1728
-
-    elif i == 1:
-        ours_idx = state > 0
-        theirs_idx = state < 0
-    
-        ours_pos = np.flatnonzero(ours_idx)
-        theirs_pos = np.flatnonzero(theirs_idx)
-
-    
-        our_com = sum(np.array(st.itop(p)) for p in ours_pos) / len(ours_pos)
-        
-        their_com = sum(np.array(st.itop(p)) for p in theirs_pos) / len(theirs_pos)
-
-        fv = manhattan(our_com, their_com) / 16
-
-    elif i == 2:
-        ours_idx = state > 0
-        theirs_idx = state < 0
-    
-        ours_pos = np.flatnonzero(ours_idx)
-        theirs_pos = np.flatnonzero(theirs_idx)
-
-    
-        our_com = sum(np.array(st.itop(p)) for p in ours_pos) / len(ours_pos)
-        
-        their_com = sum(np.array(st.itop(p)) for p in theirs_pos) / len(theirs_pos)
-
-        fv = manhattan(our_com, (4, 4)) / 8
-    
-    elif i < 11:
-        fv = np.count_nonzero(state == (i - 2)) / 12
-
-
-    elif i == 11:
-        fv = np.count_nonzero(state >= 8) / 12
-
+    fv = feature(state)[i]
 
     return fv * (1 - (reward(state, weights) ** 2))
 
