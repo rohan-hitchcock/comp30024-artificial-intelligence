@@ -13,9 +13,16 @@ def load_states_to_numpy(dirpth):
         pred_states[i] = np.load(os.path.join(dirpth, state_file))
     return pred_states
 
+def load_states_to_numpy_2(dirpth):
+    state_files = os.listdir(dirpth)
+    pred_states = []
+    for i, state_file in enumerate(sorted(state_files, key=lambda s: int(s.split(".")[0]))):
+        pred_states.append(np.load(os.path.join(dirpth, state_file)))
+    return pred_states
 
-TEMP_DISCOUNT = 0.9
-LEARNING_RATE = 0.2
+
+TEMP_DISCOUNT = 0.7
+LEARNING_RATE = 0.09
 
 parser = argparse.ArgumentParser(description="For training a player.")
 
@@ -57,8 +64,9 @@ for i in range(args.num_iterations):
 
     weights = np.load("./pretty_fly_for_an_AI/weights.npy")
     pred_states = load_states_to_numpy("./pretty_fly_for_an_AI/ml_logging")
+    prev_states = load_states_to_numpy_2("./pretty_fly_for_an_AI/prevs")
 
-    new_weights = tdleaf_update(weights, pred_states, reward, dpartial_reward, args.temp_discount, args.learning_rate)
+    new_weights = tdleaf_update(weights, pred_states, reward, dpartial_reward, args.temp_discount, args.learning_rate, prev_states)
 
     np.save("./pretty_fly_for_an_AI/weights.npy", new_weights)
 
@@ -68,6 +76,7 @@ for i in range(args.num_iterations):
     # delete all files in the logging folder
     if (i + 1) != args.num_iterations:
         os.system("rm ./pretty_fly_for_an_AI/ml_logging/*")
+        os.system("rm ./pretty_fly_for_an_AI/prevs/*")
 
     as_white = not as_white
     print(f"({i + 1}/{args.num_iterations}) complete.")

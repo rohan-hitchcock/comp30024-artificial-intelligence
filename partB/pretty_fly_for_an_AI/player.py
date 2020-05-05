@@ -1,5 +1,5 @@
 import numpy as np
-from pretty_fly_for_an_AI import state 
+from pretty_fly_for_an_AI import state
 from pretty_fly_for_an_AI.minimax import alpha_beta_search as minimax
 
 import pretty_fly_for_an_AI.evaluation as ev
@@ -7,12 +7,12 @@ import pretty_fly_for_an_AI.evaluation as ev
 from pretty_fly_for_an_AI.minimax import alpha_beta_search_ml as minimax_ml
 from pretty_fly_for_an_AI.state_logging import StateLogger
 from pretty_fly_for_an_AI.evaluation import reward
+from collections import deque
 
 from math import ceil
 
-
-
 WEIGHTS_FILE = "./pretty_fly_for_an_AI/weights.npy"
+
 
 class Player:
     minimax_depth = 3
@@ -61,7 +61,6 @@ class Player:
         #         value += 10 * (state.board[i] - sum)
 
         return value
-
 
     def __init__(self, color):
         """
@@ -122,17 +121,19 @@ class Player:
             pos = data[0]
             self.state = state.boom(self.state, state.ptoi(*pos))
 
+
 class LearnerPlayer:
-    
     minimax_depth = 3
 
     weights = np.load(WEIGHTS_FILE)
-    
-    ev = lambda state : reward(state, LearnerPlayer.weights)
+
+    ev = lambda state, prev_states: reward(state, LearnerPlayer.weights, prev_states)
 
     def __init__(self, color):
 
         self.state = state.create_start_state(color)
+        self.prev_states = deque()
+        self.prev_states.append(self.state)
 
         self.logger = StateLogger()
 
@@ -140,7 +141,7 @@ class LearnerPlayer:
 
     def action(self):
 
-        return minimax_ml(self.state, depth=LearnerPlayer.minimax_depth, ev=LearnerPlayer.ev, ml_logger=self.logger)
+        return minimax_ml(self.state, depth=LearnerPlayer.minimax_depth, ev=LearnerPlayer.ev, ml_logger=self.logger, prev_states=self.prev_states)
 
     def update(self, color, action):
 
@@ -158,8 +159,13 @@ class LearnerPlayer:
             pos = data[0]
             self.state = state.boom(self.state, state.ptoi(*pos))
 
+        self.prev_states.append(self.state)
+        if len(self.prev_states) == 5:
+            self.prev_states.popleft()
+
         if state.is_gameover(self.state):
             self.logger.add(self.state)
+            self.logger.record_prev(self.prev_states)
 
 
 if __name__ == "__main__":

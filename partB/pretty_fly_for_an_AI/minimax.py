@@ -108,30 +108,33 @@ def min_value(state, depth, ev, alpha, beta):
 
 
 # New Implementation. Not sure If it works either.
-def alpha_beta_search_ml(state, depth, ev, ml_logger):
+def alpha_beta_search_ml(state, depth, ev, ml_logger, prev_states):
     alpha = -float("inf")
     beta = float("inf")
-
     if np.count_nonzero(state) < 5:
         depth = 5
         expander = lambda s, opponent: st.next_states_end(s, opponent)
+    elif np.count_nonzero(state) > 20:
+        depth = 1
+        expander = lambda s, opponent: st.next_states(s, opponent)
     else:
         expander = lambda s, opponent: st.next_states(s, opponent)
 
-    v, mv, pred_state = max_value_ml(state, depth, ev, alpha, beta, expander)
+    v, mv, pred_state = max_value_ml(state, depth, ev, alpha, beta, expander, prev_states)
     ml_logger.add(pred_state)
+    ml_logger.record_prev(prev_states)
     return mv
 
 
-def max_value_ml(state, depth, ev, alpha, beta, expander):
+def max_value_ml(state, depth, ev, alpha, beta, expander, prev_states):
     if depth == 0 or st.is_gameover(state):
-        return ev(state), None, state
+        return ev(state, prev_states), None, state
 
     v = -float("inf")
     move = None
     pred_state = None
     for mv, child_state in expander(state, False):
-        score, came_from, leaf_state = min_value_ml(child_state, depth - 1, ev, alpha, beta, expander)
+        score, came_from, leaf_state = min_value_ml(child_state, depth - 1, ev, alpha, beta, expander, prev_states)
         if score > v:
             v = score
             pred_state = leaf_state
@@ -145,15 +148,15 @@ def max_value_ml(state, depth, ev, alpha, beta, expander):
     return v, move, pred_state
 
 
-def min_value_ml(state, depth, ev, alpha, beta, expander):
+def min_value_ml(state, depth, ev, alpha, beta, expander, prev_states):
     if depth == 0 or st.is_gameover(state):
-        return ev(state), None, state
+        return ev(state, prev_states), None, state
 
     v = float("inf")
     move = None
     pred_state = None
     for mv, child_state in expander(state, True):
-        score, came_from, leaf_state = max_value_ml(child_state, depth - 1, ev, alpha, beta, expander)
+        score, came_from, leaf_state = max_value_ml(child_state, depth - 1, ev, alpha, beta, expander, prev_states)
         if score < v:
             v = score
             pred_state = leaf_state
