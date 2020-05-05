@@ -62,19 +62,17 @@ class Player:
 
         return value
 
-
     def __init__(self, color):
-        
+
         self.state = state.create_start_state(color)
 
         self.color = color
 
     def action(self):
-        
+
         return minimax(self.state, depth=Player.minimax_depth, ev=Player.ev)
 
     def update(self, color, action):
-        
 
         action_type, data = action[0], action[1:]
 
@@ -110,7 +108,8 @@ class LearnerPlayer:
 
     def action(self):
 
-        return minimax_ml(self.state, depth=LearnerPlayer.minimax_depth, ev=LearnerPlayer.ev, ml_logger=self.logger, prev_states=self.prev_states)
+        return minimax_ml(self.state, depth=LearnerPlayer.minimax_depth, ev=LearnerPlayer.ev, ml_logger=self.logger,
+                          prev_states=self.prev_states)
 
     def update(self, color, action):
 
@@ -127,7 +126,6 @@ class LearnerPlayer:
 
             pos = data[0]
             self.state = state.boom(self.state, state.ptoi(*pos))
-
 
         self.prev_states.append(self.state)
         if len(self.prev_states) == 5:

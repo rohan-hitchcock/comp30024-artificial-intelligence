@@ -52,6 +52,7 @@ as_white = True
 
 # delete all files in the logging folder
 os.system("rm ./pretty_fly_for_an_AI/ml_logging/*")
+os.system("rm ./pretty_fly_for_an_AI/prevs/*")
 
 for i in range(args.num_iterations):
 

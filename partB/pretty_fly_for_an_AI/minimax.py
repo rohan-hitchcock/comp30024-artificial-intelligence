@@ -61,12 +61,13 @@ def min_value(state, depth, ev, alpha, beta):
 def alpha_beta_search_ml(state, depth, ev, ml_logger, prev_states):
     alpha = -float("inf")
     beta = float("inf")
-    if np.count_nonzero(state) < 5:
-        depth = 5
-        expander = lambda s, opponent: st.next_states_end(s, opponent)
-    elif np.count_nonzero(state) > 20:
+
+    if np.count_nonzero(state) > 20:
         depth = 1
         expander = lambda s, opponent: st.next_states(s, opponent)
+    # elif np.count_nonzero(state) < 5:
+    #     depth = 5
+    #     expander = lambda s, opponent: st.next_states_end(s, opponent)
     else:
         expander = lambda s, opponent: st.next_states(s, opponent)
 
