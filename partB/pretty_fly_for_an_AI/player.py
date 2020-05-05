@@ -17,7 +17,7 @@ WEIGHTS_FILE = "./pretty_fly_for_an_AI/weights.npy"
 class Player:
     minimax_depth = 3
 
-    evaluation_function = lambda state: Player.new_eval(state)
+    ev = lambda state: Player.new_eval(state)
 
     @staticmethod
     def manhattan(pos1, pos2):

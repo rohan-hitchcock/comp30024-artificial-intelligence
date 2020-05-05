@@ -69,23 +69,24 @@ for i in range(args.num_iterations):
                   "pretty_fly_for_an_AI:" + args.opponent,
                   "pretty_fly_for_an_AI:LearnerPlayer"]
 
-    result = subprocess.run(to_run, stdout=subprocess.PIPE, encoding='utf-8')
+    # result = subprocess.run(to_run, stdout=subprocess.PIPE, encoding='utf-8')
+    subprocess.run(to_run)
 
-    if "draw" in result.stdout:
-        wld = "draw"
-    else:
-        if as_white:
-            wld = "win" if "white" in result.stdout else "loss"
+    # if "draw" in result.stdout:
+    #     wld = "draw"
+    # else:
+    #     if as_white:
+    #         wld = "win" if "white" in result.stdout else "loss"
+    #
+    #     if not as_white:
+    #         wld = "win" if "black" in result.stdout else "loss"
 
-        if not as_white:
-            wld = "win" if "black" in result.stdout else "loss"
-
-    if args.verbose:
-        print(result.stdout)
-        print(f"recorded as {wld}")
+    # if args.verbose:
+    #     print(result.stdout)
+    #     print(f"recorded as {wld}")
 
     weights = np.load("./pretty_fly_for_an_AI/weights.npy")
-    pred_states = load_states_to_numpy("./pretty_fly_for_an_AI/ml_logging", wld)
+    pred_states = load_states_to_numpy("./pretty_fly_for_an_AI/ml_logging", "draw")
     prev_states = load_states_to_numpy_2("./pretty_fly_for_an_AI/prevs")
 
     new_weights = tdleaf_update(weights, pred_states, reward, dpartial_reward, args.temp_discount, args.learning_rate,
