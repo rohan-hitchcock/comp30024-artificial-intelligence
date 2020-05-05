@@ -131,13 +131,8 @@ def move_positions_end(stack_i, height):
     x0, y0 = itop(stack_i)
 
     # iterate over move distances
-    # Moves generated from furthest first to closest last
-    if height > 1:
-        moves = [height, ceil(height / 2)]
-    else:
-        moves = [1]
 
-    for d in moves:
+    for d in range(height, 0, -3):
 
         if 0 <= y0 - d: mp.append(ptoi(x0, y0 - d))
         if BOARD_SIZE > y0 + d: mp.append(ptoi(x0, y0 + d))
@@ -172,13 +167,12 @@ def next_states_end(s, opponent):
         for to_i in move_positions_end(si, height):
             # checks if to_i is either empty or the same color as si
             if s[to_i] * s[si] >= 0:
-                # Moves generated from moving least first, to moving all last.
                 if height == 1:
                     amount = [1]
                 else:
                     amount = [height, 1]
                 yield from ((move_name(n, si, to_i), move(s, n, si, to_i, opponent))
-                            for n in [height, 1])
+                            for n in amount)
 
     # All booms generated second
     for si in stacks:
@@ -188,7 +182,6 @@ def next_states_end(s, opponent):
             yield boom_name(si), boom(s, si)
         if opponent and any(pos > 0 for pos in s[boom_radius(si)]):
             yield boom_name(si), boom(s, si)
-
 
 
 def next_states(s, opponent):

@@ -14,6 +14,7 @@ from math import ceil
 WEIGHTS_FILE = "./pretty_fly_for_an_AI/weights.npy"
 
 
+# This is a moderate player, its the one we can now beat
 class Player:
     minimax_depth = 3
 
@@ -30,35 +31,14 @@ class Player:
 
         ours = s[s > 0]
         theirs = s[s < 0]
-        rest = s[s == 0]
         diff = (np.sum(ours) + np.sum(theirs))
 
         # feature 1: Number of pieces for each player
         value += 50 * diff
-        # value -= 4 * len(ours)
-        # value += 4 * len(rest)
 
         # feature: winning
         if len(theirs) == 0:
             value += 100000
-
-        # feature 2: Number of available moves
-        # value += w_f2 * len(list(state.next_states(opponent=False)))
-        # value -= b_f2 * len(list(state.next_states(opponent=True)))
-
-        # feature 3: Distance to middle of the board. Late game
-        if len(rest) > 56:
-            for i in s:
-                if i > 0:
-                    value -= ceil(100 * s[i] * Player.manhattan(state.itop(i), (3, 4)))
-
-        # feature 4: Explosion radius. Should include whose turn it is into this
-        # for i in range(64):
-        #     sum = 0
-        #     if state.board[i] != 0:
-        #         for j in s.boom_radius(i):
-        #             sum += state.board[j]
-        #         value += 10 * (state.board[i] - sum)
 
         return value
 
@@ -99,6 +79,8 @@ class LearnerPlayer:
     def __init__(self, color):
 
         self.state = state.create_start_state(color)
+
+        # Prev states initialised
         self.prev_states = deque()
         self.prev_states.append(self.state)
 
@@ -127,10 +109,13 @@ class LearnerPlayer:
             pos = data[0]
             self.state = state.boom(self.state, state.ptoi(*pos))
 
+        # Appends the new state
         self.prev_states.append(self.state)
+        # Once four turns have occurred, we start replacing the oldest
         if len(self.prev_states) == 5:
             self.prev_states.popleft()
 
+        # Log last prev states array
         if state.is_gameover(self.state):
             self.logger.record_prev(self.prev_states)
 

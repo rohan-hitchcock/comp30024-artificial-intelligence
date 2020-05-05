@@ -6,7 +6,7 @@ try:
 except ModuleNotFoundError:
     import state as st
 
-
+# Reward has to be passed prev states as well
 def reward(state, weights, prev_states):
     if st.is_gameover(state):
         if np.all(state == 0):
@@ -15,7 +15,7 @@ def reward(state, weights, prev_states):
             return 1
         return -1
 
-    # Checks if move state is same as one 4 moves ago
+    # Checks if move state is same as one 4 moves ago, according ONLY to our stacks
     if len(prev_states) == 4 and np.array_equal(np.maximum(state, 0), np.maximum(prev_states[0], 0)):
         return -1
 
@@ -41,16 +41,20 @@ def feature(state):
 
     our_sum = np.sum(state[ours_idx])
     their_sum = np.sum(state[theirs_idx])
+    diff = our_sum + their_sum
 
     return [
-        ((our_sum + their_sum) ** 3) / 1728,
+        ((diff ** 2) * np.sign(diff)) / 144,
         our_sum / (our_com_to_theirs * 12),
         their_sum / (our_com_to_theirs * 12),
-        our_sum / (np.count_nonzero(state[state > 0]) * 12)
+        np.count_nonzero(state > 0) / 12,
+        np.count_nonzero(state < 0) / 12
     ]
 
 
 def dpartial_reward(state, weights, i, prev_states):
+
+    # I think these could be applied to some of my features??
     # if st.is_gameover(state) and (i == 1 or i == 2):
     #     return 0
 

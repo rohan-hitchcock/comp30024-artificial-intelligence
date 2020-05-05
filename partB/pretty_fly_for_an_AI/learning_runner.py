@@ -25,7 +25,7 @@ def load_states_to_numpy(dirpth, wld):
 
     return pred_states
 
-
+# Basically the same, just changed to store each file as an array of 4 states
 def load_states_to_numpy_2(dirpth):
     state_files = os.listdir(dirpth)
     pred_states = []
@@ -34,8 +34,8 @@ def load_states_to_numpy_2(dirpth):
     return pred_states
 
 
-TEMP_DISCOUNT = 0.7
-LEARNING_RATE = 0.09
+TEMP_DISCOUNT = 0.8
+LEARNING_RATE = 0.001
 
 parser = argparse.ArgumentParser(description="For training a player.")
 
@@ -69,22 +69,23 @@ for i in range(args.num_iterations):
                   "pretty_fly_for_an_AI:" + args.opponent,
                   "pretty_fly_for_an_AI:LearnerPlayer"]
 
-    # result = subprocess.run(to_run, stdout=subprocess.PIPE, encoding='utf-8')
-    subprocess.run(to_run)
+    result = subprocess.run(to_run, stdout=subprocess.PIPE, encoding='utf-8')
+    # subprocess.run(to_run)
 
-    # if "draw" in result.stdout:
-    #     wld = "draw"
-    # else:
-    #     if as_white:
-    #         wld = "win" if "white" in result.stdout else "loss"
-    #
-    #     if not as_white:
-    #         wld = "win" if "black" in result.stdout else "loss"
+    if "draw" in result.stdout:
+        wld = "draw"
+    else:
+        if as_white:
+            wld = "win" if "white" in result.stdout else "loss"
 
-    # if args.verbose:
-    #     print(result.stdout)
-    #     print(f"recorded as {wld}")
+        if not as_white:
+            wld = "win" if "black" in result.stdout else "loss"
 
+    if args.verbose:
+        print(result.stdout)
+        print(f"recorded as {wld}")
+
+    # Loading in prev states too now
     weights = np.load("./pretty_fly_for_an_AI/weights.npy")
     pred_states = load_states_to_numpy("./pretty_fly_for_an_AI/ml_logging", "draw")
     prev_states = load_states_to_numpy_2("./pretty_fly_for_an_AI/prevs")
