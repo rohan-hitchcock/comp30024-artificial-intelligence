@@ -1,56 +1,6 @@
 from pretty_fly_for_an_AI import state as st
 import numpy as np
 
-
-def minimax(state, depth, ev):
-    alpha = -float("inf")
-    beta = float("inf")
-
-    max_val = -float("inf")
-    for mv, st in st.next_states(state, opponent=False):
-
-        val = minimax_min(st, depth - 1, ev, alpha, beta)
-
-        if val >= max_val:
-            best_move = mv
-            max_val = val
-
-        alpha = max(alpha, max_val)
-
-    return best_move
-
-
-def minimax_max(state, depth, ev, alpha, beta):
-    if depth == 0 or st.is_gameover(state):
-        return ev(state)
-
-    max_val = -float("inf")
-    for mv, child_state in st.next_states(state, opponent=False):
-
-        max_val = max(max_val, minimax_min(child_state, depth - 1, ev, alpha, beta))
-        alpha = max(alpha, max_val)
-
-        if beta <= alpha:
-            return max_val
-    return max_val
-
-
-def minimax_min(state, depth, ev, alpha, beta):
-    if depth == 0 or st.is_gameover(state):
-        return ev(state)
-
-    min_val = float("inf")
-    for mv, child_state in st.next_states(state, opponent=True):
-
-        min_val = min(min_val, minimax_max(child_state, depth - 1, ev, alpha, beta))
-        beta = min(beta, min_val)
-
-        if beta <= alpha:
-            return min_val
-
-    return min_val
-
-
 # New Implementation. Not sure If it works either.
 def alpha_beta_search(state, depth, ev):
     alpha = -float("inf")

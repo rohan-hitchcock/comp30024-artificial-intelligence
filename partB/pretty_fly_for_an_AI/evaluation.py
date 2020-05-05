@@ -1,4 +1,4 @@
-from math import ceil, tanh
+from math import ceil, tanh, sqrt
 import numpy as np
 
 try:
@@ -7,8 +7,80 @@ except ModuleNotFoundError:
     import state as st
 
 
+def reward(state, weights):
+
+    if st.is_gameover(state): 
+        if np.all(state == 0):
+            return 0
+        if np.all(state >= 0):
+            return 1
+        return -1
+
+
+    feature_vals = feature(state)
+    return tanh(sum(w * f for w, f in zip(feature_vals, weights)))
+
+
+def feature(state):
+    
+    ours_idx = state > 0
+    theirs_idx = state < 0
+    
+    ours_pos = np.flatnonzero(ours_idx)
+    theirs_pos = np.flatnonzero(theirs_idx)
+
+    if len(ours_pos) == 0:
+        our_com_to_center = 0
+        our_com_to_theirs = 0
+    else:
+
+        our_com = sum(np.array(st.itop(p)) for p in ours_pos) / len(ours_pos)
+
+        our_com_to_center = manhattan(our_com, (4, 4))
+
+        if len(theirs_pos) == 0:
+            our_com_to_theirs = 0
+
+        else:
+
+            their_com = sum(np.array(st.itop(p)) for p in theirs_pos) / len(theirs_pos)
+
+            our_com_to_theirs = manhattan(our_com, their_com)
+        
+    
+
+    return [
+        ((np.sum(state[ours_idx]) + np.sum(state[theirs_idx])) ** 3) / 1728, 
+        1 - our_com_to_center / 16, 
+        1 - our_com_to_theirs / 8, 
+        np.count_nonzero(state == 1) / 12,
+        np.count_nonzero(state == 2) / 6,
+        np.count_nonzero(state == 3) / 4,
+        np.count_nonzero(state == 4) / 3,
+        np.count_nonzero(state == 5) * (5 / 12),
+        np.count_nonzero(state == 6) * (1 / 2),
+        np.count_nonzero(state == 7) * (7 / 12),
+        np.count_nonzero(state >= 8) * (2 / 3)
+    ]
+
+def dpartial_reward(state, weights, i):
+
+    if st.is_gameover(state) and (i == 1 or i == 2):
+        return 0
+
+    fv = feature(state)[i]
+
+    return fv * (1 - (reward(state, weights) ** 2))
+
+
+# Original version *************************************************************
 def manhattan(pos1, pos2):
+    
     return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+
+
+
+
 
 
 def reward(state, weights, prev_states):
@@ -26,7 +98,8 @@ def reward(state, weights, prev_states):
     return tanh(0.01 * sum(w * feature_val(state, i) for i, w in enumerate(weights)))
 
 
-def feature_val(state, i):
+
+def feature_val_v0(state, i):
     # using if statements to avoid calculating things we dont need
     if i == 0:
         # Similar to a tan function in shape, as the difference between our tokens and theirs grows, were
@@ -134,3 +207,4 @@ def feature_val(state, i):
 def dpartial_reward(state, weights, i, prev_states):
     return feature_val(state, i) * (
             1 - (reward(state, weights, prev_states) ** 2))
+

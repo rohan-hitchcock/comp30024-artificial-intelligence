@@ -5,13 +5,26 @@ from tdleaf import tdleaf_update
 from evaluation import reward, dpartial_reward
 import os
 
+import state as st
 
-def load_states_to_numpy(dirpth):
+
+def load_states_to_numpy(dirpth, wld):
     state_files = os.listdir(dirpth)
-    pred_states = np.empty((len(state_files), 64), dtype=np.int8)
+    pred_states = np.empty((len(state_files) + 1, 64), dtype=np.int8)
     for i, state_file in enumerate(sorted(state_files, key=lambda s: int(s.split(".")[0]))):
         pred_states[i] = np.load(os.path.join(dirpth, state_file))
+
+    bd = st.BOARD_EMPTY.copy()
+    if wld == "win":
+        bd[0] = 1
+
+    elif wld == "loss":
+        bd[0] = -1
+
+    pred_states[-1] = bd
+
     return pred_states
+
 
 def load_states_to_numpy_2(dirpth):
     state_files = os.listdir(dirpth)
@@ -37,6 +50,9 @@ args = parser.parse_args()
 
 as_white = True
 
+# delete all files in the logging folder
+os.system("rm ./pretty_fly_for_an_AI/ml_logging/*")
+
 for i in range(args.num_iterations):
 
     if args.verbose:
@@ -52,21 +68,27 @@ for i in range(args.num_iterations):
                   "pretty_fly_for_an_AI:" + args.opponent,
                   "pretty_fly_for_an_AI:LearnerPlayer"]
 
-    subprocess.run(to_run)
+    result = subprocess.run(to_run, stdout=subprocess.PIPE, encoding='utf-8')
 
-    #new verbose stuff. alernatives that are a bit nicer use subprocess.catch_output or something rather than run
-    # if result.stdout.decode('utf-8').__contains__('draw detected: game state occurred 4 times.'):
-        #do something
+    if "draw" in result.stdout:
+        wld = "draw"
+    else:
+        if as_white:
+            wld = "win" if "white" in result.stdout else "loss"
 
-    # if args.verbose:
-    #     print(result.stdout.decode('utf-8'))
-    #     print(result.stderr.decode('utf-8'))
+        if not as_white:
+            wld = "win" if "black" in result.stdout else "loss"
+
+    if args.verbose:
+        print(result.stdout)
+        print(f"recorded as {wld}")
 
     weights = np.load("./pretty_fly_for_an_AI/weights.npy")
-    pred_states = load_states_to_numpy("./pretty_fly_for_an_AI/ml_logging")
+    pred_states = load_states_to_numpy("./pretty_fly_for_an_AI/ml_logging", wld)
     prev_states = load_states_to_numpy_2("./pretty_fly_for_an_AI/prevs")
 
-    new_weights = tdleaf_update(weights, pred_states, reward, dpartial_reward, args.temp_discount, args.learning_rate, prev_states)
+    new_weights = tdleaf_update(weights, pred_states, reward, dpartial_reward, args.temp_discount, args.learning_rate,
+                                prev_states)
 
     np.save("./pretty_fly_for_an_AI/weights.npy", new_weights)
 
