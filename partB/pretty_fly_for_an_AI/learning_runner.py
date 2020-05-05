@@ -14,8 +14,8 @@ def load_states_to_numpy(dirpth):
     return pred_states
 
 
-TEMP_DISCOUNT = 0.7
-LEARNING_RATE = 0.1
+TEMP_DISCOUNT = 0.9
+LEARNING_RATE = 0.2
 
 parser = argparse.ArgumentParser(description="For training a player.")
 
@@ -37,23 +37,23 @@ for i in range(args.num_iterations):
         print(f"Playing as: {color_str}")
 
     if as_white:
-        to_run = ["python3", "-m", "referee",
+        to_run = ["python3", "-m", "referee", "-v0",
                   "pretty_fly_for_an_AI:LearnerPlayer",
                   "pretty_fly_for_an_AI:" + args.opponent]
     else:
-        to_run = ["python3", "-m", "referee",
+        to_run = ["python3", "-m", "referee", "-v0",
                   "pretty_fly_for_an_AI:" + args.opponent,
                   "pretty_fly_for_an_AI:LearnerPlayer"]
 
-    result = subprocess.run(to_run, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    subprocess.run(to_run)
 
     #new verbose stuff. alernatives that are a bit nicer use subprocess.catch_output or something rather than run
     # if result.stdout.decode('utf-8').__contains__('draw detected: game state occurred 4 times.'):
         #do something
 
-    if args.verbose:
-        print(result.stdout.decode('utf-8'))
-        print(result.stderr.decode('utf-8'))
+    # if args.verbose:
+    #     print(result.stdout.decode('utf-8'))
+    #     print(result.stderr.decode('utf-8'))
 
     weights = np.load("./pretty_fly_for_an_AI/weights.npy")
     pred_states = load_states_to_numpy("./pretty_fly_for_an_AI/ml_logging")

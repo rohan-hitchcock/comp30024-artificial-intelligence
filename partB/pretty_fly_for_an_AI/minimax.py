@@ -112,7 +112,7 @@ def alpha_beta_search_ml(state, depth, ev, ml_logger):
     alpha = -float("inf")
     beta = float("inf")
 
-    if np.count_nonzero(state) < 7:
+    if np.count_nonzero(state) < 5:
         depth = 5
         expander = lambda s, opponent: st.next_states_end(s, opponent)
     else:

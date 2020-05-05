@@ -34,9 +34,9 @@ class Player:
         diff = (np.sum(ours) + np.sum(theirs))
 
         # feature 1: Number of pieces for each player
-        value += 50 * diff * diff * np.sign(diff)
-        value -= 4 * len(ours)
-        value += 4 * len(rest)
+        value += 50 * diff
+        # value -= 4 * len(ours)
+        # value += 4 * len(rest)
 
         # feature: winning
         if len(theirs) == 0:
@@ -47,10 +47,10 @@ class Player:
         # value -= b_f2 * len(list(state.next_states(opponent=True)))
 
         # feature 3: Distance to middle of the board. Late game
-        if len(rest) > 59:
+        if len(rest) > 56:
             for i in s:
                 if i > 0:
-                    value -= ceil(10 * s[i] * Player.manhattan(state.itop(i), (3, 4)))
+                    value -= ceil(100 * s[i] * Player.manhattan(state.itop(i), (3, 4)))
 
         # feature 4: Explosion radius. Should include whose turn it is into this
         # for i in range(64):
