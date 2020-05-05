@@ -118,6 +118,7 @@ def max_value_ml(state, depth, ev, alpha, beta):
 
     v = -float("inf")
     move = None
+    
     for mv, child_state in st.next_states(state, opponent=False):
         score, came_from, leaf_state = min_value_ml(child_state, depth - 1, ev, alpha, beta)
         if score > v:

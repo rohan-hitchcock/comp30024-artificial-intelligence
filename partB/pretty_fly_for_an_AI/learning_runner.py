@@ -5,11 +5,26 @@ from tdleaf import tdleaf_update
 from evaluation import reward, dpartial_reward
 import os
 
-def load_states_to_numpy(dirpth):
+import state as st
+
+
+
+def load_states_to_numpy(dirpth, wld):
     state_files = os.listdir(dirpth)
-    pred_states = np.empty((len(state_files), 64), dtype=np.int8)
+    pred_states = np.empty((len(state_files) + 1, 64), dtype=np.int8)
     for i, state_file in enumerate(sorted(state_files, key=lambda s : int(s.split(".")[0]))):
         pred_states[i] = np.load(os.path.join(dirpth, state_file))
+
+
+    bd = st.BOARD_EMPTY.copy()
+    if wld == "win":
+        bd[0] = 1
+
+    elif wld == "loss":
+        bd[0] = -1
+        
+    pred_states[-1] = bd
+    
     return pred_states
 
 
@@ -33,6 +48,8 @@ if args.verbose:
 else:
     stdouterr = subprocess.PIPE
 
+#delete all files in the logging folder
+os.system("rm ./pretty_fly_for_an_AI/ml_logging/*")
 
 for i in range(args.num_iterations):
 
@@ -50,10 +67,28 @@ for i in range(args.num_iterations):
                   "pretty_fly_for_an_AI:LearnerPlayer"]
     
     
-    subprocess.run(to_run, stderr=stdouterr, stdout=stdouterr)
+    result = subprocess.run(to_run, stdout=subprocess.PIPE, encoding='utf-8')
+
+    if "draw" in result.stdout:
+        wld = "draw"
+    else:
+        if as_white:
+            wld = "win" if "white" in result.stdout else "loss"
+
+        if not as_white:
+            wld = "win" if "black" in result.stdout else "loss"
+    
+        
+    if args.verbose:
+        print(result.stdout)
+        print(f"recorded as {wld}")
+    
 
     weights = np.load("./pretty_fly_for_an_AI/weights.npy")
-    pred_states = load_states_to_numpy("./pretty_fly_for_an_AI/ml_logging")
+    pred_states = load_states_to_numpy("./pretty_fly_for_an_AI/ml_logging", wld)
+
+    
+
 
     new_weights = tdleaf_update(weights, pred_states, reward, dpartial_reward, args.temp_discount, args.learning_rate)
 
