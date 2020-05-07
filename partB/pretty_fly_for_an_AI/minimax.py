@@ -1,7 +1,7 @@
 from pretty_fly_for_an_AI import state as st
 import numpy as np
 
-# New Implementation. Not sure If it works either.
+# IMPLEMENTATION FOR MODERATE PLAYER
 def alpha_beta_search(state, depth, ev):
     alpha = -float("inf")
     beta = float("inf")
@@ -56,7 +56,7 @@ def min_value(state, depth, ev, alpha, beta):
     # print("summary min: v= " + str(v) + " from: " + str(child) + " on move: " + str(move))
     return v, move
 
-
+# ----------------------------------------- LEARNER ----------------------------------- #
 # New Implementation. Prev states now need to be passed into here so they can be passed to reward!!!
 def alpha_beta_search_ml(state, depth, ev, ml_logger, prev_states):
     alpha = -float("inf")
@@ -119,6 +119,66 @@ def min_value_ml(state, depth, ev, alpha, beta, expander, prev_states):
             return v, move, pred_state
         beta = min(beta, v)
     return v, move, pred_state
+
+# ------------------------------------------ LEARNED -----------------------------------------#
+
+# Implementation for learned player
+def alpha_beta_search_learned(state, depth, ev, prev_states):
+    alpha = -float("inf")
+    beta = float("inf")
+
+    # if np.count_nonzero(state) > 20:
+    #     depth = 1
+    #     expander = lambda s, opponent: st.next_states(s, opponent)
+
+
+    # if np.count_nonzero(state) < 5:
+    #     depth = 5
+    #     expander = lambda s, opponent: st.next_states_end(s, opponent)
+    # else
+
+    expander = lambda s, opponent: st.next_states(s, opponent)
+
+    v, mv = max_value_learned(state, depth, ev, alpha, beta, expander, prev_states)
+
+    return mv
+
+
+def max_value_learned(state, depth, ev, alpha, beta, expander, prev_states):
+    if depth == 0 or st.is_gameover(state):
+        return ev(state, prev_states), None
+
+    v = -float("inf")
+    move = None
+    for mv, child_state in expander(state, False):
+        score, came_from = min_value_learned(child_state, depth - 1, ev, alpha, beta, expander, prev_states)
+        if score > v:
+            v = score
+            move = mv
+
+        if v >= beta:
+            return v, move
+
+        alpha = max(alpha, v)
+    return v, move
+
+
+def min_value_learned(state, depth, ev, alpha, beta, expander, prev_states):
+    if depth == 0 or st.is_gameover(state):
+        return ev(state, prev_states), None
+
+    v = float("inf")
+    move = None
+    for mv, child_state in expander(state, True):
+        score, came_from, leaf_state = max_value_learned(child_state, depth - 1, ev, alpha, beta, expander, prev_states)
+        if score < v:
+            v = score
+            move = mv
+
+        if v <= alpha:
+            return v, move
+        beta = min(beta, v)
+    return v, move
 
 
 if __name__ == "__main__":
