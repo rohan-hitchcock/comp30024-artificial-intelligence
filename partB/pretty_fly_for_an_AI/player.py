@@ -8,6 +8,7 @@ from pretty_fly_for_an_AI.minimax import alpha_beta_search_ml as minimax_ml
 from pretty_fly_for_an_AI.state_logging import StateLogger
 from pretty_fly_for_an_AI.evaluation import reward
 from collections import deque
+from collections import defaultdict as dd
 
 from math import ceil
 
@@ -81,8 +82,8 @@ class LearnerPlayer:
         self.state = state.create_start_state(color)
 
         # Prev states initialised
-        self.prev_states = deque()
-        self.prev_states.append(self.state)
+        self.prev_states = dd(int)
+        self.prev_states[self.state.tobytes()]
 
         self.logger = StateLogger()
 
@@ -105,18 +106,18 @@ class LearnerPlayer:
             n, sp, ep = data
             self.state = state.move(self.state, n, state.ptoi(*sp), state.ptoi(*ep), opponent)
         else:
+            
+            #previous states can now never occur, safe to clear memory
+            del self.prev_states
+            self.prev_states = dd(int)
 
             pos = data[0]
             self.state = state.boom(self.state, state.ptoi(*pos))
 
-        # Appends the new state. Its used in eval like this: np.maximum(prev_states[0], 0).
-        # Might make sense to hash that directly seeing as its not used any other way?
-        self.prev_states.append(self.state)
+        
+        self.prev_states[self.state.tobytes()] += 1
 
-        # Once four turns have occurred, we start replacing the oldest
-        if len(self.prev_states) == 5:
-            self.prev_states.popleft()
-
+        
         # Log last prev states array. This is just for the learner though.
         if state.is_gameover(self.state):
             self.logger.record_prev(self.prev_states)

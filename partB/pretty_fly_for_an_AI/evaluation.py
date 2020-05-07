@@ -6,6 +6,9 @@ try:
 except ModuleNotFoundError:
     import state as st
 
+MAX_RECURS = 4
+
+
 # Reward has to be passed prev states as well
 def reward(state, weights, prev_states):
     if st.is_gameover(state):
@@ -16,7 +19,7 @@ def reward(state, weights, prev_states):
         return -1
 
     # Checks if move state is same as one 4 moves ago, according ONLY to our stacks
-    if len(prev_states) == 4 and np.array_equal(np.maximum(state, 0), np.maximum(prev_states[0], 0)):
+    if prev_states[state.tobytes()] >= MAX_RECURS:
         return -1
 
     feature_vals = feature(state)
