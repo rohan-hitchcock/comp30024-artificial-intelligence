@@ -109,13 +109,15 @@ class LearnerPlayer:
             pos = data[0]
             self.state = state.boom(self.state, state.ptoi(*pos))
 
-        # Appends the new state
+        # Appends the new state. Its used in eval like this: np.maximum(prev_states[0], 0).
+        # Might make sense to hash that directly seeing as its not used any other way?
         self.prev_states.append(self.state)
+
         # Once four turns have occurred, we start replacing the oldest
         if len(self.prev_states) == 5:
             self.prev_states.popleft()
 
-        # Log last prev states array
+        # Log last prev states array. This is just for the learner though.
         if state.is_gameover(self.state):
             self.logger.record_prev(self.prev_states)
 

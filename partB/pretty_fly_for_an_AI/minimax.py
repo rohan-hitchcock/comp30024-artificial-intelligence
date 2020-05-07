@@ -68,11 +68,11 @@ def alpha_beta_search_ml(state, depth, ev, ml_logger, prev_states):
 
     # This is still being used... I think its needed for now... havent tried without. Dont want to ruin current
     # weights lol
-    if np.count_nonzero(state) < 5:
-        depth = 5
-        expander = lambda s, opponent: st.next_states_end(s, opponent)
-    else:
-        expander = lambda s, opponent: st.next_states(s, opponent)
+    # if np.count_nonzero(state) < 5:
+    #     depth = 5
+    #     expander = lambda s, opponent: st.next_states_end(s, opponent)
+    # else:
+    expander = lambda s, opponent: st.next_states(s, opponent)
 
     v, mv, pred_state = max_value_ml(state, depth, ev, alpha, beta, expander, prev_states)
     ml_logger.add(pred_state)
