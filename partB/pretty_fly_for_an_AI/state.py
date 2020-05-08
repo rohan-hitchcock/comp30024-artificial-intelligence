@@ -219,16 +219,10 @@ def next_states(s, opponent, avoid=dict()):
 
         # Assumes that opponent also wont blow up. If it does, thats fine but dont need to generate the move.
         if not opponent and any(pos < 0 for pos in s[boom_radius(si)]):
-            next_state = boom(s, si)
-
-            if next_state.tobytes() not in avoid:
-                yield boom_name(si), next_state
+            yield boom_name(si), boom(s, si)
 
         if opponent and any(pos > 0 for pos in s[boom_radius(si)]):
-            next_state = boom(s, si)
-
-            if next_state.tobytes() not in avoid:
-                yield boom_name(si), next_state
+            yield boom_name(si), boom(s, si)
 
     # All moves generated next
     for si in stacks:
@@ -290,7 +284,7 @@ def move_positions_black(stack_i, height):
 
     # iterate over move distances
     # Moves generated from furthest first to closest last
-    for d in range(height, 0, -1):
+    for d in range(height, 0, -2):
 
         if 0 <= y0 - d: mp.append(ptoi(x0, y0 - d))
         if BOARD_SIZE > y0 + d: mp.append(ptoi(x0, y0 + d))
@@ -322,16 +316,10 @@ def next_states_black(s, opponent, avoid=dict()):
 
         # Assumes that opponent also wont blow up. If it does, thats fine but dont need to generate the move.
         if not opponent and any(pos < 0 for pos in s[boom_radius(si)]):
-            next_state = boom(s, si)
-
-            if next_state.tobytes() not in avoid:
-                yield boom_name(si), next_state
+            yield boom_name(si), boom(s, si)
 
         if opponent and any(pos > 0 for pos in s[boom_radius(si)]):
-            next_state = boom(s, si)
-
-            if next_state.tobytes() not in avoid:
-                yield boom_name(si), next_state
+            yield boom_name(si), boom(s, si)
 
     # All moves generated next
     for si in stacks:

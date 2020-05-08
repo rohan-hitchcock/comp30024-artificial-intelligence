@@ -34,8 +34,8 @@ def load_states_to_numpy_2(dirpth):
     return pred_states
 
 
-TEMP_DISCOUNT = 0.8
-LEARNING_RATE = 0.005
+TEMP_DISCOUNT = 0.9
+LEARNING_RATE = 0.01
 
 parser = argparse.ArgumentParser(description="For training a player.")
 
@@ -57,17 +57,17 @@ if not args.battleground and not args.opponent:
 # delete all files in the logging folder
 os.system("rm ./pretty_fly_for_an_AI/ml_logging/*")
 
-as_white = False
+as_white = True
 
 for i in range(args.num_iterations):
 
     if args.battleground:
-        to_run = ["python3", "-m", "battleground", "-v0", 
+        to_run = ["python3", "-m", "battleground",
                   "pretty_fly_for_an_AI:LearnerPlayer", "pretty_fly_for_an_AI"]
 
 
     elif as_white:
-        to_run = ["python3", "-m", "referee", "-v0",
+        to_run = ["python3", "-m", "referee",
                   "pretty_fly_for_an_AI:LearnerPlayer",
                   "pretty_fly_for_an_AI:" + args.opponent]
     else:
@@ -87,7 +87,7 @@ for i in range(args.num_iterations):
     if "draw" in result.stdout:
         wld = "draw"
     elif "winner" in result.stdout:
-        wld = "win" if color in result.stdout else "loss"
+        wld = "win" if f"winner: {color}" in result.stdout else "loss"
 
     else:
         print("Game ended unexpectedly. Output from battleground:")
@@ -100,8 +100,11 @@ for i in range(args.num_iterations):
         print(f"recorded as {wld}")
 
     # Loading in prev states too now
-    weights = np.load("./pretty_fly_for_an_AI/weights.npy")
-    pred_states = load_states_to_numpy("./pretty_fly_for_an_AI/ml_logging", "draw")
+    if as_white:
+        weights = np.load("./pretty_fly_for_an_AI/weights_w.npy")
+    else:
+        weights = np.load("./pretty_fly_for_an_AI/weights_b.npy")
+    pred_states = load_states_to_numpy("./pretty_fly_for_an_AI/ml_logging", wld)
 
     new_weights = tdleaf_update(weights, pred_states, reward, dpartial_reward, args.temp_discount, args.learning_rate)
 
@@ -114,7 +117,7 @@ for i in range(args.num_iterations):
     if (i + 1) != args.num_iterations:
         os.system("rm ./pretty_fly_for_an_AI/ml_logging/*")
 
-    # as_white = not as_white
+    as_white = not as_white
     print(f"({i + 1}/{args.num_iterations}) complete.")
     if args.verbose:
         print()

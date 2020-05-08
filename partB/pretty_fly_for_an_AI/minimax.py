@@ -1,6 +1,7 @@
 from pretty_fly_for_an_AI import state as st
 import numpy as np
 
+
 # IMPLEMENTATION FOR MODERATE PLAYER
 def alpha_beta_search(state, depth, ev):
     alpha = -float("inf")
@@ -56,23 +57,18 @@ def min_value(state, depth, ev, alpha, beta):
     # print("summary min: v= " + str(v) + " from: " + str(child) + " on move: " + str(move))
     return v, move
 
+
 # ----------------------------------------- LEARNER ----------------------------------- #
 # New Implementation. Prev states now need to be passed into here so they can be passed to reward!!!
 def alpha_beta_search_ml(state, depth, ev, ml_logger, prev_states, expan):
     alpha = -float("inf")
     beta = float("inf")
 
-    # if np.count_nonzero(state) > 20:
-    #     depth = 1
-    #     expander = lambda s, opponent: st.next_states(s, opponent)
-
-    # if np.count_nonzero(state) < 5:
-    #     depth = 5
-    #     expander = lambda s, opponent: st.next_states_end(s, opponent)
+    # if np.count_nonzero(state) < 6:
+    #     expander = lambda s, opponent: st.next_states_black(s, opponent, avoid=prev_states)
     # else:
 
     expander = lambda s, opponent: expan(s, opponent, avoid=prev_states)
-
 
     v, mv, pred_state = max_value_ml(state, depth, ev, alpha, beta, expander)
     ml_logger.add(pred_state)
@@ -119,20 +115,23 @@ def min_value_ml(state, depth, ev, alpha, beta, expander):
         beta = min(beta, v)
     return v, move, pred_state
 
+
 # ------------------------------------------ LEARNED -----------------------------------------#
 counter = 0
+
+
 # Implementation for learned player
 def alpha_beta_search_learned(state, depth, ev, prev_states, expan):
     alpha = -float("inf")
     beta = float("inf")
-    # if np.count_nonzero(state) > 20:
+    # if np.count_nonzero(state) > 19:
     #     depth = 1
-    #     expander = lambda s, opponent: st.next_states(s, opponent)
-    if np.count_nonzero(state) < 5:
-        depth = 5
-        expander = lambda s, opponent: st.next_states_end(s, opponent, avoid = prev_states)
-    else:
-        expander = lambda s, opponent: expan(s, opponent, avoid=prev_states)
+    #     expander = lambda s, opponent: expan(s, opponent, avoid=prev_states)
+    # elif np.count_nonzero(state) < 5:
+    #     depth = 5
+    #     expander = lambda s, opponent: st.next_states_end(s, opponent, avoid=prev_states)
+    # else:
+    expander = lambda s, opponent: expan(s, opponent, avoid=prev_states)
 
     v, mv = max_value_learned(state, depth, ev, alpha, beta, expander)
     global counter

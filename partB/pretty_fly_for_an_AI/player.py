@@ -13,9 +13,10 @@ from collections import defaultdict as dd
 
 from math import ceil
 
-WEIGHTS_FILE = "./pretty_fly_for_an_AI/weights.npy"
+WEIGHTS_W = "./pretty_fly_for_an_AI/weights_w.npy"
+WEIGHTS_B = "./pretty_fly_for_an_AI/weights_b.npy"
 LEARNED_WEIGHTS = "./pretty_fly_for_an_AI/weights_learned.npy"
-LEARNED_WEIGHTS_BLACK = "./pretty_fly_for_an_AI/weights.npy"
+LEARNED_WEIGHTS_BLACK = "./pretty_fly_for_an_AI/weights_learned.npy"
 
 BLACK_COLOR = "black"
 WHITE_COLOR = "white"
@@ -84,12 +85,14 @@ class Player:
 class LearnerPlayer:
     minimax_depth = 3
 
-    weights = np.load(WEIGHTS_FILE)
+    weights_w = np.load(WEIGHTS_W)
+    weights_b = np.load(WEIGHTS_B)
 
     expander_w = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
     expander_b = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
 
-    ev = lambda state: reward(state, LearnerPlayer.weights)
+    ev_w = lambda state: reward(state, LearnerPlayer.weights_w)
+    ev_b = lambda state: reward(state, LearnerPlayer.weights_b)
 
     def __init__(self, color):
 
@@ -98,21 +101,23 @@ class LearnerPlayer:
         # Prev states initialised
         self.prev_states = set()
         self.prev_states.add(self.state.tobytes())
-
+        self.counter = 0
         self.logger = StateLogger()
 
         self.color = color
         if color == BLACK_COLOR:
             self.expander = LearnerPlayer.expander_b
+            self.ev = LearnerPlayer.ev_b
         else:
             self.expander = LearnerPlayer.expander_w
+            self.ev = LearnerPlayer.ev_w
 
         with open("./pretty_fly_for_an_AI/ml_logging/color.color", "w") as fp:
             fp.write(color)
 
     def action(self):
 
-        return minimax_ml(self.state, depth=LearnerPlayer.minimax_depth, ev=LearnerPlayer.ev, ml_logger=self.logger,
+        return minimax_ml(self.state, depth=LearnerPlayer.minimax_depth, ev=self.ev, ml_logger=self.logger,
                           prev_states=self.prev_states, expan=self.expander)
 
     def update(self, color, action):
@@ -121,6 +126,9 @@ class LearnerPlayer:
 
         # check if this is an opponents move
         opponent = self.color != color
+
+        self.counter += 1
+        print(self.counter)
 
         if action_type == state.MOVE_ACTION:
 
@@ -150,6 +158,9 @@ class LearnedPlayer:
     expander_w = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
     expander_b = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
 
+    moves_w = [("MOVE", 1, (3, 1), (4, 1)), ("MOVE", 2, (4, 1), (4, 3))] #, ("MOVE", 2, (4, 3), (4, 5))]
+    moves_b = [("MOVE", 1, (4, 6), (3, 6)), ("MOVE", 2, (3, 6), (3, 4))] #, ("MOVE", 2, (3, 4), (3, 2))]
+
     def __init__(self, color):
 
         self.state = state.create_start_state(color)
@@ -162,11 +173,16 @@ class LearnedPlayer:
         if color == BLACK_COLOR:
             self.ev = LearnedPlayer.ev_black
             self.expander = LearnedPlayer.expander_b
+            self.moves = LearnedPlayer.moves_b
         else:
             self.ev = LearnedPlayer.ev_white
             self.expander = LearnedPlayer.expander_w
+            self.moves = LearnedPlayer.moves_w
 
     def action(self):
+
+        if self.moves:
+            return self.moves.pop(0)
 
         return minimax_learned(self.state, depth=LearnedPlayer.minimax_depth, ev=self.ev,
                                prev_states=self.prev_states, expan=self.expander)

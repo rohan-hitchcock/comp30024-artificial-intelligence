@@ -5,7 +5,6 @@ class StateLogger():
 
     def __init__(self):
         self.counter = itertools.count()
-        self.counter2 = itertools.count()
 
     def add(self, state):
 
