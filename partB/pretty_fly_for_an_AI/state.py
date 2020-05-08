@@ -289,7 +289,7 @@ def move_positions_black(stack_i, height):
     return np.array(mp)
 
 
-def next_states_black(s, opponent):
+def next_states_black(s, opponent, avoid=dict()):
     """ A generator for the states accessible from this state via valid moves.
 
         Produces the State as well as an identifier for the action taken.
@@ -311,21 +311,31 @@ def next_states_black(s, opponent):
 
         # Assumes that opponent also wont blow up. If it does, thats fine but dont need to generate the move.
         if not opponent and any(pos < 0 for pos in s[boom_radius(si)]):
-            yield boom_name(si), boom(s, si)
+            next_state = boom(s, si)
+
+            if next_state.tobytes() not in avoid:
+                yield boom_name(si), next_state
+
         if opponent and any(pos > 0 for pos in s[boom_radius(si)]):
-            yield boom_name(si), boom(s, si)
+            next_state = boom(s, si)
+
+            if next_state.tobytes() not in avoid:
+                yield boom_name(si), next_state
 
     # All moves generated next
     for si in stacks:
 
         height = abs(s[si])
 
-        for to_i in move_positions_black(si, height):
+        for to_i in move_positions(si, height):
             # checks if to_i is either empty or the same color as si
             if s[to_i] * s[si] >= 0:
-                # Moves generated from moving least first, to moving all last.
-                yield from ((move_name(n, si, to_i), move(s, n, si, to_i, opponent))
-                            for n in range(height, 0, -1))
+
+                for n in range(height, 0, -1):
+
+                    next_state = move(s, n, si, to_i, opponent)
+                    if next_state.tobytes() not in avoid:
+                        yield move_name(n, si, to_i), next_state
 
 
 def is_gameover(s):

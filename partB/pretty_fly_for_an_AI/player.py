@@ -20,6 +20,7 @@ LEARNED_WEIGHTS_BLACK = "./pretty_fly_for_an_AI/weights_learned.npy"
 BLACK_COLOR = "black"
 WHITE_COLOR = "white"
 
+
 # This is a moderate player, its the one we can now beat
 class Player:
     minimax_depth = 3
@@ -56,7 +57,6 @@ class Player:
 
         self.counter = 0
 
-
     def action(self):
 
         return minimax(self.state, depth=Player.minimax_depth, ev=Player.ev)
@@ -86,12 +86,10 @@ class LearnerPlayer:
 
     weights = np.load(WEIGHTS_FILE)
 
-
-    expander_w = lambda s, opponent: state.next_states(s, opponent)
-    expander_b = lambda s, opponent: state.next_states_end(s, opponent)
+    expander_w = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
+    expander_b = lambda s, opponent, avoid=dict(): state.next_states_black(s, opponent, avoid=avoid)
 
     ev = lambda state: reward(state, LearnerPlayer.weights)
-
 
     def __init__(self, color):
 
@@ -115,7 +113,7 @@ class LearnerPlayer:
     def action(self):
 
         return minimax_ml(self.state, depth=LearnerPlayer.minimax_depth, ev=LearnerPlayer.ev, ml_logger=self.logger,
-                          prev_states=self.prev_states, expander=self.expander)
+                          prev_states=self.prev_states, expan=self.expander)
 
     def update(self, color, action):
 
@@ -129,15 +127,14 @@ class LearnerPlayer:
             n, sp, ep = data
             self.state = state.move(self.state, n, state.ptoi(*sp), state.ptoi(*ep), opponent)
         else:
-            
-            #previous states can now never occur, safe to clear memory
+
+            # previous states can now never occur, safe to clear memory
             del self.prev_states
             self.prev_states = set()
 
             pos = data[0]
             self.state = state.boom(self.state, state.ptoi(*pos))
 
-        
         self.prev_states.add(self.state.tobytes())
 
 
@@ -147,19 +144,19 @@ class LearnedPlayer:
     weights_white = np.load(LEARNED_WEIGHTS)
     weights_black = np.load(LEARNED_WEIGHTS_BLACK)
 
-    ev_white = lambda state, prev_states: reward(state, LearnedPlayer.weights_white, prev_states)
-    ev_black = lambda state, prev_states: reward(state, LearnedPlayer.weights_black, prev_states)
+    ev_white = lambda state: reward(state, LearnedPlayer.weights_white)
+    ev_black = lambda state: reward(state, LearnedPlayer.weights_black)
 
-    expander_w = lambda s, opponent: state.next_states(s, opponent)
-    expander_b = lambda s, opponent: state.next_states_end(s, opponent)
+    expander_w = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
+    expander_b = lambda s, opponent, avoid=dict(): state.next_states_black(s, opponent, avoid=avoid)
 
     def __init__(self, color):
 
         self.state = state.create_start_state(color)
 
         # Prev states initialised
-        self.prev_states = deque()
-        self.prev_states.append(self.state)
+        self.prev_states = set()
+        self.prev_states.add(self.state.tobytes())
 
         self.color = color
         if color == BLACK_COLOR:
@@ -172,7 +169,7 @@ class LearnedPlayer:
     def action(self):
 
         return minimax_learned(self.state, depth=LearnedPlayer.minimax_depth, ev=self.ev,
-                               prev_states=self.prev_states, expander=self.expander)
+                               prev_states=self.prev_states, expan=self.expander)
 
     def update(self, color, action):
 
@@ -187,15 +184,14 @@ class LearnedPlayer:
             self.state = state.move(self.state, n, state.ptoi(*sp), state.ptoi(*ep), opponent)
         else:
 
+            # previous states can now never occur, safe to clear memory
+            del self.prev_states
+            self.prev_states = set()
+
             pos = data[0]
             self.state = state.boom(self.state, state.ptoi(*pos))
 
-        # Appends the new state. Its used in eval like this: np.maximum(prev_states[0], 0).
-        # Might make sense to hash that directly seeing as its not used any other way?
-        self.prev_states.append(self.state)
-        # Once four turns have occurred, we start replacing the oldest
-        if len(self.prev_states) == 5:
-            self.prev_states.popleft()
+        self.prev_states.add(self.state.tobytes())
 
 
 if __name__ == "__main__":
