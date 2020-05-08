@@ -35,7 +35,7 @@ def load_states_to_numpy_2(dirpth):
 
 
 TEMP_DISCOUNT = 0.8
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.005
 
 parser = argparse.ArgumentParser(description="For training a player.")
 
@@ -57,7 +57,7 @@ if not args.battleground and not args.opponent:
 # delete all files in the logging folder
 os.system("rm ./pretty_fly_for_an_AI/ml_logging/*")
 
-as_white = True
+as_white = False
 
 for i in range(args.num_iterations):
 
@@ -114,7 +114,7 @@ for i in range(args.num_iterations):
     if (i + 1) != args.num_iterations:
         os.system("rm ./pretty_fly_for_an_AI/ml_logging/*")
 
-    as_white = not as_white
+    # as_white = not as_white
     print(f"({i + 1}/{args.num_iterations}) complete.")
     if args.verbose:
         print()

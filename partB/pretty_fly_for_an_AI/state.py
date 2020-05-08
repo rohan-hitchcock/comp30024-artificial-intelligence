@@ -144,7 +144,7 @@ def move_positions_end(stack_i, height):
     return np.array(mp)
 
 
-def next_states_end(s, opponent):
+def next_states_end(s, opponent, avoid=dict()):
     """ A generator for the states accessible from this state via valid moves.
 
         Produces the State as well as an identifier for the action taken.
@@ -161,7 +161,7 @@ def next_states_end(s, opponent):
     # get the indexes of the stacks of the player making the move
     stacks = np.flatnonzero(s < 0) if opponent else np.flatnonzero(s > 0)
 
-    # All moves generated first
+    # All moves
     for si in stacks:
 
         height = abs(s[si])
@@ -169,21 +169,32 @@ def next_states_end(s, opponent):
         for to_i in move_positions_end(si, height):
             # checks if to_i is either empty or the same color as si
             if s[to_i] * s[si] >= 0:
+                # Moves generated from moving least first, to moving all last.
                 if height == 1:
-                    amount = [1]
+                    moves = [1]
                 else:
-                    amount = [height, 1]
-                yield from ((move_name(n, si, to_i), move(s, n, si, to_i, opponent))
-                            for n in amount)
+                    moves = [1, height]
+                for n in moves:
 
-    # All booms generated second
+                    next_state = move(s, n, si, to_i, opponent)
+                    if next_state.tobytes() not in avoid:
+                        yield move_name(n, si, to_i), next_state
+
     for si in stacks:
 
         # Assumes that opponent also wont blow up. If it does, thats fine but dont need to generate the move.
         if not opponent and any(pos < 0 for pos in s[boom_radius(si)]):
-            yield boom_name(si), boom(s, si)
+            next_state = boom(s, si)
+
+            if next_state.tobytes() not in avoid:
+                yield boom_name(si), next_state
+
         if opponent and any(pos > 0 for pos in s[boom_radius(si)]):
-            yield boom_name(si), boom(s, si)
+            next_state = boom(s, si)
+
+            if next_state.tobytes() not in avoid:
+                yield boom_name(si), next_state
+
 
 
 # ---------------------------- NORMAL MOVE ORDER (WHITE) -----------------------------#
@@ -327,7 +338,7 @@ def next_states_black(s, opponent, avoid=dict()):
 
         height = abs(s[si])
 
-        for to_i in move_positions(si, height):
+        for to_i in move_positions_black(si, height):
             # checks if to_i is either empty or the same color as si
             if s[to_i] * s[si] >= 0:
 

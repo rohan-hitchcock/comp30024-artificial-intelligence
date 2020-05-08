@@ -15,7 +15,7 @@ from math import ceil
 
 WEIGHTS_FILE = "./pretty_fly_for_an_AI/weights.npy"
 LEARNED_WEIGHTS = "./pretty_fly_for_an_AI/weights_learned.npy"
-LEARNED_WEIGHTS_BLACK = "./pretty_fly_for_an_AI/weights_learned.npy"
+LEARNED_WEIGHTS_BLACK = "./pretty_fly_for_an_AI/weights.npy"
 
 BLACK_COLOR = "black"
 WHITE_COLOR = "white"
@@ -87,7 +87,7 @@ class LearnerPlayer:
     weights = np.load(WEIGHTS_FILE)
 
     expander_w = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
-    expander_b = lambda s, opponent, avoid=dict(): state.next_states_black(s, opponent, avoid=avoid)
+    expander_b = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
 
     ev = lambda state: reward(state, LearnerPlayer.weights)
 
@@ -148,7 +148,7 @@ class LearnedPlayer:
     ev_black = lambda state: reward(state, LearnedPlayer.weights_black)
 
     expander_w = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
-    expander_b = lambda s, opponent, avoid=dict(): state.next_states_black(s, opponent, avoid=avoid)
+    expander_b = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
 
     def __init__(self, color):
 

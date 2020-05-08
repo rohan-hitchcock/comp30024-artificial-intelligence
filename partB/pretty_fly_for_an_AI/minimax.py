@@ -128,14 +128,11 @@ def alpha_beta_search_learned(state, depth, ev, prev_states, expan):
     # if np.count_nonzero(state) > 20:
     #     depth = 1
     #     expander = lambda s, opponent: st.next_states(s, opponent)
-
-
-    # if np.count_nonzero(state) < 5:
-    #     depth = 5
-    #     expander = lambda s, opponent: st.next_states_end(s, opponent)
-    # else
-
-    expander = lambda s, opponent: expan(s, opponent, avoid=prev_states)
+    if np.count_nonzero(state) < 5:
+        depth = 5
+        expander = lambda s, opponent: st.next_states_end(s, opponent, avoid = prev_states)
+    else:
+        expander = lambda s, opponent: expan(s, opponent, avoid=prev_states)
 
     v, mv = max_value_learned(state, depth, ev, alpha, beta, expander)
     global counter
