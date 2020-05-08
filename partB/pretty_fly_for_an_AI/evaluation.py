@@ -10,16 +10,12 @@ MAX_RECURS = 4
 
 
 # Reward has to be passed prev states as well
-def reward(state, weights, prev_states):
+def reward(state, weights):
     if st.is_gameover(state):
         if np.all(state == 0):
             return 0
         if np.all(state >= 0):
             return 1
-        return -1
-
-    # Checks if move state is same as one 4 moves ago, according ONLY to our stacks
-    if prev_states[state.tobytes()] >= MAX_RECURS:
         return -1
 
     feature_vals = feature(state)
@@ -55,7 +51,7 @@ def feature(state):
     ]
 
 
-def dpartial_reward(state, weights, i, prev_states):
+def dpartial_reward(state, weights, i):
 
     # I think these could be applied to some of my features??
     # if st.is_gameover(state) and (i == 1 or i == 2):
@@ -63,7 +59,7 @@ def dpartial_reward(state, weights, i, prev_states):
 
     fv = feature(state)[i]
 
-    return fv * (1 - (reward(state, weights, prev_states) ** 2))
+    return fv * (1 - (reward(state, weights) ** 2))
 
 
 def manhattan(pos1, pos2):

@@ -49,6 +49,8 @@ class Player:
 
         self.color = color
 
+        
+
     def action(self):
 
         return minimax(self.state, depth=Player.minimax_depth, ev=Player.ev)
@@ -75,19 +77,22 @@ class LearnerPlayer:
 
     weights = np.load(WEIGHTS_FILE)
 
-    ev = lambda state, prev_states: reward(state, LearnerPlayer.weights, prev_states)
+    ev = lambda state: reward(state, LearnerPlayer.weights)
 
     def __init__(self, color):
 
         self.state = state.create_start_state(color)
 
         # Prev states initialised
-        self.prev_states = dd(int)
-        self.prev_states[self.state.tobytes()]
+        self.prev_states = set()
+        self.prev_states.add(self.state.tobytes())
 
         self.logger = StateLogger()
 
         self.color = color
+
+        with open("./pretty_fly_for_an_AI/ml_logging/color.color", "w") as fp:
+            fp.write(color)
 
     def action(self):
 
@@ -109,18 +114,13 @@ class LearnerPlayer:
             
             #previous states can now never occur, safe to clear memory
             del self.prev_states
-            self.prev_states = dd(int)
+            self.prev_states = set()
 
             pos = data[0]
             self.state = state.boom(self.state, state.ptoi(*pos))
 
         
-        self.prev_states[self.state.tobytes()] += 1
-
-        
-        # Log last prev states array. This is just for the learner though.
-        if state.is_gameover(self.state):
-            self.logger.record_prev(self.prev_states)
+        self.prev_states.add(self.state.tobytes())
 
 
 if __name__ == "__main__":

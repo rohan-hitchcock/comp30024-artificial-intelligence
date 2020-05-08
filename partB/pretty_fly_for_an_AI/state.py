@@ -184,7 +184,7 @@ def next_states_end(s, opponent):
             yield boom_name(si), boom(s, si)
 
 
-def next_states(s, opponent):
+def next_states(s, opponent, avoid=dict()):
     """ A generator for the states accessible from this state via valid moves.
 
         Produces the State as well as an identifier for the action taken.
@@ -205,9 +205,16 @@ def next_states(s, opponent):
 
         # Assumes that opponent also wont blow up. If it does, thats fine but dont need to generate the move.
         if not opponent and any(pos < 0 for pos in s[boom_radius(si)]):
-            yield boom_name(si), boom(s, si)
+            next_state = boom(s, si)
+
+            if next_state.tobytes() not in avoid:
+                yield boom_name(si), next_state
+
         if opponent and any(pos > 0 for pos in s[boom_radius(si)]):
-            yield boom_name(si), boom(s, si)
+            next_state = boom(s, si)
+
+            if next_state.tobytes() not in avoid:
+                yield boom_name(si), next_state
 
     # All moves generated next
     for si in stacks:
@@ -218,8 +225,12 @@ def next_states(s, opponent):
             # checks if to_i is either empty or the same color as si
             if s[to_i] * s[si] >= 0:
                 # Moves generated from moving least first, to moving all last.
-                yield from ((move_name(n, si, to_i), move(s, n, si, to_i, opponent))
-                            for n in range(1, height + 1))
+
+                for n in range(1, height + 1):
+
+                    next_state = move(s, n, si, to_i, opponent)
+                    if next_state.tobytes() not in avoid:
+                        yield move_name(n, si, to_i), next_state
 
 
 def is_gameover(s):
@@ -300,12 +311,12 @@ def move_positions(stack_i, height):
 def move_name(num_tokens, si, ei):
     """ Gets the identifier for a move sending num_tokens from board index si 
         to board index ei """
-    return (MOVE_ACTION, num_tokens, itop(si), itop(ei))
+    return (MOVE_ACTION, num_tokens, itop(int(si)), itop(int(ei)))
 
 
 def boom_name(i):
     """ Gets the identifier for a boom at board index i"""
-    return (BOOM_ACTION, itop(i))
+    return (BOOM_ACTION, itop(int(i)))
 
 
 if __name__ == "__main__":
