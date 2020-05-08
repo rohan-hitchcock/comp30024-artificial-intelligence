@@ -1,6 +1,7 @@
 
 #this is our current 'best' player
 from pretty_fly_for_an_AI.player import Player
+from pretty_fly_for_an_AI.player import LearnedPlayer
 
 
 #we can import other players to compare. 

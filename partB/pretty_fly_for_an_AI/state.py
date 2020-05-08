@@ -115,6 +115,7 @@ def boom(s, i):
 
     return next_board
 
+# ------------------------------ END GAME MOVES ----------------------------------- #
 
 def move_positions_end(stack_i, height):
     """ Finds the board indexes which a stack at board index stack_i can move to
@@ -184,6 +185,7 @@ def next_states_end(s, opponent):
             yield boom_name(si), boom(s, si)
 
 
+# ---------------------------- NORMAL MOVE ORDER (WHITE) -----------------------------#
 def next_states(s, opponent):
     """ A generator for the states accessible from this state via valid moves.
 
@@ -221,6 +223,96 @@ def next_states(s, opponent):
                 yield from ((move_name(n, si, to_i), move(s, n, si, to_i, opponent))
                             for n in range(1, height + 1))
 
+
+def move_positions(stack_i, height):
+    """ Finds the board indexes which a stack at board index stack_i can move to
+
+        Args:
+            stack_i: a board index of the stack
+            height: the height of the stack
+
+        Returns:
+            The board indexes which stack_i may move to
+    """
+    mp = []
+
+    x0, y0 = itop(stack_i)
+
+    # iterate over move distances
+    # Moves generated from furthest first to closest last
+    for d in range(height, 0, -1):
+
+        if 0 <= y0 - d: mp.append(ptoi(x0, y0 - d))
+        if BOARD_SIZE > y0 + d: mp.append(ptoi(x0, y0 + d))
+        if 0 <= x0 - d: mp.append(ptoi(x0 - d, y0))
+        if BOARD_SIZE > x0 + d: mp.append(ptoi(x0 + d, y0))
+
+    return np.array(mp)
+
+# --------------------------------- BLACK MOVE ORDERING --------------------------------- #
+def move_positions_black(stack_i, height):
+    """ Finds the board indexes which a stack at board index stack_i can move to
+
+        Args:
+            stack_i: a board index of the stack
+            height: the height of the stack
+
+        Returns:
+            The board indexes which stack_i may move to
+    """
+    mp = []
+
+    x0, y0 = itop(stack_i)
+
+    # iterate over move distances
+    # Moves generated from furthest first to closest last
+    for d in range(height, 0, -1):
+
+        if 0 <= y0 - d: mp.append(ptoi(x0, y0 - d))
+        if BOARD_SIZE > y0 + d: mp.append(ptoi(x0, y0 + d))
+        if 0 <= x0 - d: mp.append(ptoi(x0 - d, y0))
+        if BOARD_SIZE > x0 + d: mp.append(ptoi(x0 + d, y0))
+
+    return np.array(mp)
+
+
+def next_states_black(s, opponent):
+    """ A generator for the states accessible from this state via valid moves.
+
+        Produces the State as well as an identifier for the action taken.
+
+        Args:
+            s: the board state
+            opponent: set to True if the opponent is making the move.
+
+        Yields:
+            tuples of the form (name, state) where name is the identifier
+            of the action and state is the State object resulting from the
+            action.
+    """
+    # get the indexes of the stacks of the player making the move
+    stacks = np.flatnonzero(s < 0) if opponent else np.flatnonzero(s > 0)
+
+    # All booms generated first
+    for si in stacks:
+
+        # Assumes that opponent also wont blow up. If it does, thats fine but dont need to generate the move.
+        if not opponent and any(pos < 0 for pos in s[boom_radius(si)]):
+            yield boom_name(si), boom(s, si)
+        if opponent and any(pos > 0 for pos in s[boom_radius(si)]):
+            yield boom_name(si), boom(s, si)
+
+    # All moves generated next
+    for si in stacks:
+
+        height = abs(s[si])
+
+        for to_i in move_positions_black(si, height):
+            # checks if to_i is either empty or the same color as si
+            if s[to_i] * s[si] >= 0:
+                # Moves generated from moving least first, to moving all last.
+                yield from ((move_name(n, si, to_i), move(s, n, si, to_i, opponent))
+                            for n in range(height, 0, -1))
 
 def is_gameover(s):
     return np.all(s >= 0) or np.all(s <= 0)
@@ -269,32 +361,6 @@ def boom_radius(i):
     return np.array([
         ptoi(x, y) for x, y in poss if 0 <= x < BOARD_SIZE and 0 <= y < BOARD_SIZE
     ])
-
-
-def move_positions(stack_i, height):
-    """ Finds the board indexes which a stack at board index stack_i can move to
-
-        Args:
-            stack_i: a board index of the stack
-            height: the height of the stack
-        
-        Returns:
-            The board indexes which stack_i may move to
-    """
-    mp = []
-
-    x0, y0 = itop(stack_i)
-
-    # iterate over move distances
-    # Moves generated from furthest first to closest last
-    for d in range(height, 0, -1):
-
-        if 0 <= y0 - d: mp.append(ptoi(x0, y0 - d))
-        if BOARD_SIZE > y0 + d: mp.append(ptoi(x0, y0 + d))
-        if 0 <= x0 - d: mp.append(ptoi(x0 - d, y0))
-        if BOARD_SIZE > x0 + d: mp.append(ptoi(x0 + d, y0))
-
-    return np.array(mp)
 
 
 def move_name(num_tokens, si, ei):

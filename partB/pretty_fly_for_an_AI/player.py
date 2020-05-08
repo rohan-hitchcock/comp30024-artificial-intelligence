@@ -14,7 +14,10 @@ from math import ceil
 
 WEIGHTS_FILE = "./pretty_fly_for_an_AI/weights.npy"
 LEARNED_WEIGHTS = "./pretty_fly_for_an_AI/weights_learned.npy"
+LEARNED_WEIGHTS_BLACK = "./pretty_fly_for_an_AI/weights_learned.npy"
 
+BLACK_COLOR = "black"
+WHITE_COLOR = "white"
 
 # This is a moderate player, its the one we can now beat
 class Player:
@@ -50,6 +53,8 @@ class Player:
 
         self.color = color
 
+        self.counter = 0
+
     def action(self):
 
         return minimax(self.state, depth=Player.minimax_depth, ev=Player.ev)
@@ -60,6 +65,9 @@ class Player:
 
         # check if this is an opponents move
         opponent = self.color != color
+
+        self.counter += 1
+        print(self.counter)
 
         if action_type == state.MOVE_ACTION:
 
@@ -76,6 +84,9 @@ class LearnerPlayer:
 
     weights = np.load(WEIGHTS_FILE)
 
+    expander_w = lambda s, opponent: state.next_states(s, opponent)
+    expander_b = lambda s, opponent: state.next_states_end(s, opponent)
+
     ev = lambda state, prev_states: reward(state, LearnerPlayer.weights, prev_states)
 
     def __init__(self, color):
@@ -89,11 +100,15 @@ class LearnerPlayer:
         self.logger = StateLogger()
 
         self.color = color
+        if color == BLACK_COLOR:
+            self.expander = LearnerPlayer.expander_b
+        else:
+            self.expander = LearnerPlayer.expander_w
 
     def action(self):
 
         return minimax_ml(self.state, depth=LearnerPlayer.minimax_depth, ev=LearnerPlayer.ev, ml_logger=self.logger,
-                          prev_states=self.prev_states)
+                          prev_states=self.prev_states, expander=self.expander)
 
     def update(self, color, action):
 
@@ -127,9 +142,14 @@ class LearnerPlayer:
 class LearnedPlayer:
     minimax_depth = 3
 
-    weights = np.load(LEARNED_WEIGHTS)
+    weights_white = np.load(LEARNED_WEIGHTS)
+    weights_black = np.load(LEARNED_WEIGHTS_BLACK)
 
-    ev = lambda state, prev_states: reward(state, LearnedPlayer.weights, prev_states)
+    ev_white = lambda state, prev_states: reward(state, LearnedPlayer.weights_white, prev_states)
+    ev_black = lambda state, prev_states: reward(state, LearnedPlayer.weights_black, prev_states)
+
+    expander_w = lambda s, opponent: state.next_states(s, opponent)
+    expander_b = lambda s, opponent: state.next_states_end(s, opponent)
 
     def __init__(self, color):
 
@@ -140,11 +160,17 @@ class LearnedPlayer:
         self.prev_states.append(self.state)
 
         self.color = color
+        if color == BLACK_COLOR:
+            self.ev = LearnedPlayer.ev_black
+            self.expander = LearnedPlayer.expander_b
+        else:
+            self.ev = LearnedPlayer.ev_white
+            self.expander = LearnedPlayer.expander_w
 
     def action(self):
 
-        return minimax_learned(self.state, depth=LearnedPlayer.minimax_depth, ev=LearnedPlayer.ev,
-                               prev_states=self.prev_states)
+        return minimax_learned(self.state, depth=LearnedPlayer.minimax_depth, ev=self.ev,
+                               prev_states=self.prev_states, expander=self.expander)
 
     def update(self, color, action):
 
@@ -165,11 +191,9 @@ class LearnedPlayer:
         # Appends the new state. Its used in eval like this: np.maximum(prev_states[0], 0).
         # Might make sense to hash that directly seeing as its not used any other way?
         self.prev_states.append(self.state)
-
         # Once four turns have occurred, we start replacing the oldest
         if len(self.prev_states) == 5:
             self.prev_states.popleft()
-
 
 
 if __name__ == "__main__":

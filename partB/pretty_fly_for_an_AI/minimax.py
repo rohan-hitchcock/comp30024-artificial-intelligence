@@ -58,7 +58,7 @@ def min_value(state, depth, ev, alpha, beta):
 
 # ----------------------------------------- LEARNER ----------------------------------- #
 # New Implementation. Prev states now need to be passed into here so they can be passed to reward!!!
-def alpha_beta_search_ml(state, depth, ev, ml_logger, prev_states):
+def alpha_beta_search_ml(state, depth, ev, ml_logger, prev_states, expander):
     alpha = -float("inf")
     beta = float("inf")
 
@@ -72,7 +72,7 @@ def alpha_beta_search_ml(state, depth, ev, ml_logger, prev_states):
     #     depth = 5
     #     expander = lambda s, opponent: st.next_states_end(s, opponent)
     # else:
-    expander = lambda s, opponent: st.next_states(s, opponent)
+    # expander = lambda s, opponent: st.next_states(s, opponent)
 
     v, mv, pred_state = max_value_ml(state, depth, ev, alpha, beta, expander, prev_states)
     ml_logger.add(pred_state)
@@ -121,12 +121,11 @@ def min_value_ml(state, depth, ev, alpha, beta, expander, prev_states):
     return v, move, pred_state
 
 # ------------------------------------------ LEARNED -----------------------------------------#
-
+counter = 0
 # Implementation for learned player
-def alpha_beta_search_learned(state, depth, ev, prev_states):
+def alpha_beta_search_learned(state, depth, ev, prev_states, expander):
     alpha = -float("inf")
     beta = float("inf")
-
     # if np.count_nonzero(state) > 20:
     #     depth = 1
     #     expander = lambda s, opponent: st.next_states(s, opponent)
@@ -137,10 +136,11 @@ def alpha_beta_search_learned(state, depth, ev, prev_states):
     #     expander = lambda s, opponent: st.next_states_end(s, opponent)
     # else
 
-    expander = lambda s, opponent: st.next_states(s, opponent)
+    # expander = lambda s, opponent: st.next_states(s, opponent)
 
     v, mv = max_value_learned(state, depth, ev, alpha, beta, expander, prev_states)
-
+    global counter
+    print(counter)
     return mv
 
 
@@ -151,6 +151,8 @@ def max_value_learned(state, depth, ev, alpha, beta, expander, prev_states):
     v = -float("inf")
     move = None
     for mv, child_state in expander(state, False):
+        global counter
+        counter += 1
         score, came_from = min_value_learned(child_state, depth - 1, ev, alpha, beta, expander, prev_states)
         if score > v:
             v = score
@@ -170,7 +172,9 @@ def min_value_learned(state, depth, ev, alpha, beta, expander, prev_states):
     v = float("inf")
     move = None
     for mv, child_state in expander(state, True):
-        score, came_from, leaf_state = max_value_learned(child_state, depth - 1, ev, alpha, beta, expander, prev_states)
+        global counter
+        counter += 1
+        score, came_from = max_value_learned(child_state, depth - 1, ev, alpha, beta, expander, prev_states)
         if score < v:
             v = score
             move = mv

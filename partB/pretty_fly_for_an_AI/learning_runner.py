@@ -48,7 +48,7 @@ parser.add_argument("--learning_rate", "-l", type=float, default=LEARNING_RATE, 
 
 args = parser.parse_args()
 
-as_white = True
+as_white = False
 
 # delete all files in the logging folder
 os.system("rm ./pretty_fly_for_an_AI/ml_logging/*")
@@ -61,11 +61,11 @@ for i in range(args.num_iterations):
         print(f"Playing as: {color_str}")
 
     if as_white:
-        to_run = ["python3", "-m", "referee", "-v0",
+        to_run = ["python3", "-m", "referee",
                   "pretty_fly_for_an_AI:LearnerPlayer",
                   "pretty_fly_for_an_AI:" + args.opponent]
     else:
-        to_run = ["python3", "-m", "referee", "-v0",
+        to_run = ["python3", "-m", "referee",
                   "pretty_fly_for_an_AI:" + args.opponent,
                   "pretty_fly_for_an_AI:LearnerPlayer"]
 
