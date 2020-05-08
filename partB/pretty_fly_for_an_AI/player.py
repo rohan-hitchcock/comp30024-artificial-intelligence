@@ -9,6 +9,7 @@ from pretty_fly_for_an_AI.minimax import alpha_beta_search_ml as minimax_ml
 from pretty_fly_for_an_AI.state_logging import StateLogger
 from pretty_fly_for_an_AI.evaluation import reward
 from collections import deque
+from collections import defaultdict as dd
 
 from math import ceil
 
@@ -55,6 +56,7 @@ class Player:
 
         self.counter = 0
 
+
     def action(self):
 
         return minimax(self.state, depth=Player.minimax_depth, ev=Player.ev)
@@ -84,18 +86,20 @@ class LearnerPlayer:
 
     weights = np.load(WEIGHTS_FILE)
 
+
     expander_w = lambda s, opponent: state.next_states(s, opponent)
     expander_b = lambda s, opponent: state.next_states_end(s, opponent)
 
-    ev = lambda state, prev_states: reward(state, LearnerPlayer.weights, prev_states)
+    ev = lambda state: reward(state, LearnerPlayer.weights)
+
 
     def __init__(self, color):
 
         self.state = state.create_start_state(color)
 
         # Prev states initialised
-        self.prev_states = deque()
-        self.prev_states.append(self.state)
+        self.prev_states = set()
+        self.prev_states.add(self.state.tobytes())
 
         self.logger = StateLogger()
 
@@ -104,6 +108,9 @@ class LearnerPlayer:
             self.expander = LearnerPlayer.expander_b
         else:
             self.expander = LearnerPlayer.expander_w
+
+        with open("./pretty_fly_for_an_AI/ml_logging/color.color", "w") as fp:
+            fp.write(color)
 
     def action(self):
 
@@ -122,21 +129,16 @@ class LearnerPlayer:
             n, sp, ep = data
             self.state = state.move(self.state, n, state.ptoi(*sp), state.ptoi(*ep), opponent)
         else:
+            
+            #previous states can now never occur, safe to clear memory
+            del self.prev_states
+            self.prev_states = set()
 
             pos = data[0]
             self.state = state.boom(self.state, state.ptoi(*pos))
 
-        # Appends the new state. Its used in eval like this: np.maximum(prev_states[0], 0).
-        # Might make sense to hash that directly seeing as its not used any other way?
-        self.prev_states.append(self.state)
-
-        # Once four turns have occurred, we start replacing the oldest
-        if len(self.prev_states) == 5:
-            self.prev_states.popleft()
-
-        # Log last prev states array. This is just for the learner though.
-        if state.is_gameover(self.state):
-            self.logger.record_prev(self.prev_states)
+        
+        self.prev_states.add(self.state.tobytes())
 
 
 class LearnedPlayer:

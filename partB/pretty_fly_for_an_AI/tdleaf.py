@@ -1,7 +1,7 @@
 import numpy as np
 import os
 
-def tdleaf_update(weights, pred_states, reward, dpartial_reward, temporal_discount, learning_rate, prev_states):
+def tdleaf_update(weights, pred_states, reward, dpartial_reward, temporal_discount, learning_rate):
     """ Updates a weight vector according to the TD-Leaf(lambda) algorithm.
     
         Args:
@@ -24,8 +24,8 @@ def tdleaf_update(weights, pred_states, reward, dpartial_reward, temporal_discou
 
     # Has to zip new prev states too
     tds = np.array(
-        [reward(s1, weights, p1) - reward(s0, weights, p0)
-        for s0, s1, p0, p1 in zip(pred_states, pred_states[1:], prev_states, prev_states[1:])
+        [reward(s1, weights) - reward(s0, weights)
+        for s0, s1 in zip(pred_states, pred_states[1:])
 
     ])
 
@@ -36,7 +36,7 @@ def tdleaf_update(weights, pred_states, reward, dpartial_reward, temporal_discou
 
     # Same here
     derivs = np.array([
-        [dpartial_reward(s, weights, i, p) for s, p in zip(pred_states[:-1], prev_states[:-1])]
+        [dpartial_reward(s, weights, i) for s in pred_states[:-1]]
         for i in range(len(weights))
     ])
 

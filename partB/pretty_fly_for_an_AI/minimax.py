@@ -72,23 +72,24 @@ def alpha_beta_search_ml(state, depth, ev, ml_logger, prev_states, expander):
     #     depth = 5
     #     expander = lambda s, opponent: st.next_states_end(s, opponent)
     # else:
-    # expander = lambda s, opponent: st.next_states(s, opponent)
 
-    v, mv, pred_state = max_value_ml(state, depth, ev, alpha, beta, expander, prev_states)
+    expander = lambda s, opponent: st.next_states(s, opponent, avoid=prev_states)
+
+
+    v, mv, pred_state = max_value_ml(state, depth, ev, alpha, beta, expander)
     ml_logger.add(pred_state)
-    ml_logger.record_prev(prev_states)
     return mv
 
 
-def max_value_ml(state, depth, ev, alpha, beta, expander, prev_states):
+def max_value_ml(state, depth, ev, alpha, beta, expander):
     if depth == 0 or st.is_gameover(state):
-        return ev(state, prev_states), None, state
+        return ev(state), None, state
 
     v = -float("inf")
     move = None
     pred_state = None
     for mv, child_state in expander(state, False):
-        score, came_from, leaf_state = min_value_ml(child_state, depth - 1, ev, alpha, beta, expander, prev_states)
+        score, came_from, leaf_state = min_value_ml(child_state, depth - 1, ev, alpha, beta, expander)
         if score > v:
             v = score
             pred_state = leaf_state
@@ -101,15 +102,15 @@ def max_value_ml(state, depth, ev, alpha, beta, expander, prev_states):
     return v, move, pred_state
 
 
-def min_value_ml(state, depth, ev, alpha, beta, expander, prev_states):
+def min_value_ml(state, depth, ev, alpha, beta, expander):
     if depth == 0 or st.is_gameover(state):
-        return ev(state, prev_states), None, state
+        return ev(state), None, state
 
     v = float("inf")
     move = None
     pred_state = None
     for mv, child_state in expander(state, True):
-        score, came_from, leaf_state = max_value_ml(child_state, depth - 1, ev, alpha, beta, expander, prev_states)
+        score, came_from, leaf_state = max_value_ml(child_state, depth - 1, ev, alpha, beta, expander)
         if score < v:
             v = score
             pred_state = leaf_state
