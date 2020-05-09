@@ -10,3 +10,5 @@ from pretty_fly_for_an_AI.random_player import RandomPlayer
 
 from pretty_fly_for_an_AI.player import LearnerPlayer
 
+from pretty_fly_for_an_AI.player import PvsPlayer
+

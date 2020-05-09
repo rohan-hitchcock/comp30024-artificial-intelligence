@@ -1,5 +1,7 @@
 from pretty_fly_for_an_AI import state as st
 import numpy as np
+import math
+
 
 
 # IMPLEMENTATION FOR MODERATE PLAYER
@@ -115,6 +117,7 @@ def min_value_ml(state, depth, ev, alpha, beta, expander):
     return v, move, pred_state
 
 
+
 # ------------------------------------------ LEARNED -----------------------------------------#
 counter = 0
 
@@ -177,6 +180,53 @@ def min_value_learned(state, depth, ev, alpha, beta, expander):
             return v, move
         beta = min(beta, v)
     return v, move
+
+def principle_variation_search(state, depth, ev, prev_states):
+
+    expander = lambda s, opponent: st.next_states(s, opponent, avoid=prev_states)
+    _, move = pvs_algorithm(state, depth, -float("inf"), float("inf"), False, ev, expander)
+
+    if move is None:
+        print("oh no!")
+
+    return move
+
+def pvs_algorithm(state, depth, alpha, beta, opponent, ev, expander):
+
+    if depth == 0 or st.is_gameover(state):
+        sgn = -1 if opponent else 1
+        return sgn * ev(state), None
+
+    is_first = True
+    move = None
+    for mv, child in expander(state, opponent):
+
+        if is_first:
+            score, _ = pvs_algorithm(child, depth - 1, -beta, -alpha, not opponent, ev, expander)
+            score = -score
+
+
+            is_first = False
+        else:
+            score, _ = pvs_algorithm(child, depth - 1, -alpha - 1, -alpha, not opponent, ev, expander)
+            score = -score
+
+            if alpha < score < beta:
+
+                score, _ = pvs_algorithm(child, depth - 1, -beta, -score, not opponent, ev, expander)
+                score = -score
+
+        if score > alpha:
+            alpha = score
+            move = mv
+
+        if alpha >= beta:   
+            break
+
+    return alpha, move
+    
+
+
 
 
 if __name__ == "__main__":

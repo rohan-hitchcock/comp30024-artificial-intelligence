@@ -3,6 +3,8 @@ from pretty_fly_for_an_AI import state
 from pretty_fly_for_an_AI.minimax import alpha_beta_search as minimax
 from pretty_fly_for_an_AI.minimax import alpha_beta_search_learned as minimax_learned
 
+from pretty_fly_for_an_AI.minimax import principle_variation_search as pvs
+
 import pretty_fly_for_an_AI.evaluation as ev
 
 from pretty_fly_for_an_AI.minimax import alpha_beta_search_ml as minimax_ml
@@ -13,6 +15,7 @@ from collections import defaultdict as dd
 
 from math import ceil
 
+WEIGHTS_FILE = "./pretty_fly_for_an_AI/weights.npy"
 WEIGHTS_W = "./pretty_fly_for_an_AI/weights_w.npy"
 WEIGHTS_B = "./pretty_fly_for_an_AI/weights_b.npy"
 LEARNED_WEIGHTS = "./pretty_fly_for_an_AI/weights_learned.npy"
@@ -21,6 +24,8 @@ LEARNED_WEIGHTS_BLACK = "./pretty_fly_for_an_AI/weights_learned.npy"
 BLACK_COLOR = "black"
 WHITE_COLOR = "white"
 
+
+turn_count = 0
 
 # This is a moderate player, its the one we can now beat
 class Player:
@@ -116,11 +121,13 @@ class LearnerPlayer:
             fp.write(color)
 
     def action(self):
-
         return minimax_ml(self.state, depth=LearnerPlayer.minimax_depth, ev=self.ev, ml_logger=self.logger,
                           prev_states=self.prev_states, expan=self.expander)
 
+
     def update(self, color, action):
+
+        global turn_count
 
         action_type, data = action[0], action[1:]
 
@@ -218,7 +225,61 @@ class LearnedPlayer:
                 self.moves.append(("MOVE", 2, (4, 7), (6, 7)))
 
         self.prev_states.add(self.state.tobytes())
+        
+        print(f"({turn_count})")
 
+
+class PvsPlayer:
+    minimax_depth = 3
+
+    weights = np.load(WEIGHTS_FILE)
+
+    ev = lambda state: reward(state, PvsPlayer.weights)
+
+    def __init__(self, color):
+
+        self.state = state.create_start_state(color)
+
+        # Prev states initialised
+        self.prev_states = set()
+        self.prev_states.add(self.state.tobytes())
+
+        self.color = color
+
+
+    def action(self):
+
+        global turn_count
+
+        turn_count += 1
+
+        return pvs(self.state, depth=PvsPlayer.minimax_depth, ev=PvsPlayer.ev,
+                          prev_states=self.prev_states)
+
+    def update(self, color, action):
+
+        global turn_count
+
+        action_type, data = action[0], action[1:]
+
+        # check if this is an opponents move
+        opponent = self.color != color
+
+        if action_type == state.MOVE_ACTION:
+
+            n, sp, ep = data
+            self.state = state.move(self.state, n, state.ptoi(*sp), state.ptoi(*ep), opponent)
+        else:
+            
+            #previous states can now never occur, safe to clear memory
+            del self.prev_states
+            self.prev_states = set()
+
+            pos = data[0]
+            self.state = state.boom(self.state, state.ptoi(*pos))
+
+        print(f"({turn_count})")
+        self.prev_states.add(self.state.tobytes())
 
 if __name__ == "__main__":
     pass
