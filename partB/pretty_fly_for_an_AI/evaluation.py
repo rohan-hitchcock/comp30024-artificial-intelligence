@@ -6,8 +6,6 @@ try:
 except ModuleNotFoundError:
     import state as st
 
-MAX_RECURS = 4
-
 
 # Reward has to be passed prev states as well
 def reward(state, weights):

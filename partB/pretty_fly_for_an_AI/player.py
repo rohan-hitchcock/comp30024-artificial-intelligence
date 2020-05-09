@@ -18,8 +18,8 @@ from math import ceil
 WEIGHTS_FILE = "./pretty_fly_for_an_AI/weights.npy"
 WEIGHTS_W = "./pretty_fly_for_an_AI/weights_w.npy"
 WEIGHTS_B = "./pretty_fly_for_an_AI/weights_b.npy"
-LEARNED_WEIGHTS = "./pretty_fly_for_an_AI/weights_learned.npy"
-LEARNED_WEIGHTS_BLACK = "./pretty_fly_for_an_AI/weights_learned.npy"
+LEARNED_WEIGHTS = "./pretty_fly_for_an_AI/weights_w.npy"
+LEARNED_WEIGHTS_BLACK = "./pretty_fly_for_an_AI/weights_b.npy"
 
 BLACK_COLOR = "black"
 WHITE_COLOR = "white"
@@ -96,6 +96,9 @@ class LearnerPlayer:
     expander_w = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
     expander_b = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
 
+    moves_w = [("MOVE", 1, (0, 1), (1, 1)), ("MOVE", 2, (1, 1), (3, 1)), ("MOVE", 3, (3, 1), (4, 1))]
+    moves_b = [("MOVE", 1, (3, 6), (3, 7)), ("MOVE", 1, (4, 6), (4, 7))]
+
     ev_w = lambda state: reward(state, LearnerPlayer.weights_w)
     ev_b = lambda state: reward(state, LearnerPlayer.weights_b)
 
@@ -113,14 +116,18 @@ class LearnerPlayer:
         if color == BLACK_COLOR:
             self.expander = LearnerPlayer.expander_b
             self.ev = LearnerPlayer.ev_b
+            self.moves = LearnedPlayer.moves_b
         else:
             self.expander = LearnerPlayer.expander_w
             self.ev = LearnerPlayer.ev_w
+            self.moves = LearnedPlayer.moves_w
 
         with open("./pretty_fly_for_an_AI/ml_logging/color.color", "w") as fp:
             fp.write(color)
 
     def action(self):
+        if self.moves:
+            return self.moves.pop(0)
         return minimax_ml(self.state, depth=LearnerPlayer.minimax_depth, ev=self.ev, ml_logger=self.logger,
                           prev_states=self.prev_states, expan=self.expander)
 
@@ -150,6 +157,14 @@ class LearnerPlayer:
             pos = data[0]
             self.state = state.boom(self.state, state.ptoi(*pos))
 
+        if self.counter == 5 and self.color == BLACK_COLOR:
+            if self.state[44] == -2 or self.state[12] == -4 or self.state[14] == -4 or self.state[15] == -4:
+                self.moves.append(("MOVE", 1, (1, 6), (1, 7)))
+                self.moves.append(("MOVE", 2, (3, 7), (1, 7)))
+            else:
+                self.moves.append(("MOVE", 1, (6, 6), (6, 7)))
+                self.moves.append(("MOVE", 2, (4, 7), (6, 7)))
+
         self.prev_states.add(self.state.tobytes())
 
 
@@ -163,7 +178,7 @@ class LearnedPlayer:
     ev_black = lambda state: reward(state, LearnedPlayer.weights_black)
 
     expander_w = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
-    expander_b = lambda s, opponent, avoid=dict(): state.next_states_black(s, opponent, avoid=avoid)
+    expander_b = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
 
     moves_w = [("MOVE", 1, (0, 1), (1, 1)), ("MOVE", 2, (1, 1), (3, 1)), ("MOVE", 3, (3, 1), (4, 1))]
     moves_b = [("MOVE", 1, (3, 6), (3, 7)), ("MOVE", 1, (4, 6), (4, 7))]
