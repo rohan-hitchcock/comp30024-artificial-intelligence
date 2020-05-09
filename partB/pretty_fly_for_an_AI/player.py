@@ -156,15 +156,15 @@ class LearnedPlayer:
     ev_black = lambda state: reward(state, LearnedPlayer.weights_black)
 
     expander_w = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
-    expander_b = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
+    expander_b = lambda s, opponent, avoid=dict(): state.next_states_black(s, opponent, avoid=avoid)
 
-    moves_w = [("MOVE", 1, (3, 1), (4, 1)), ("MOVE", 2, (4, 1), (4, 3))] #, ("MOVE", 2, (4, 3), (4, 5))]
-    moves_b = [("MOVE", 1, (4, 6), (3, 6)), ("MOVE", 2, (3, 6), (3, 4))] #, ("MOVE", 2, (3, 4), (3, 2))]
+    moves_w = [("MOVE", 1, (0, 1), (1, 1)), ("MOVE", 2, (1, 1), (3, 1)), ("MOVE", 3, (3, 1), (4, 1))]
+    moves_b = [("MOVE", 1, (3, 6), (3, 7)), ("MOVE", 1, (4, 6), (4, 7))]
 
     def __init__(self, color):
 
         self.state = state.create_start_state(color)
-
+        self.counter = 0
         # Prev states initialised
         self.prev_states = set()
         self.prev_states.add(self.state.tobytes())
@@ -194,6 +194,8 @@ class LearnedPlayer:
         # check if this is an opponents move
         opponent = self.color != color
 
+        self.counter += 1
+
         if action_type == state.MOVE_ACTION:
 
             n, sp, ep = data
@@ -206,6 +208,14 @@ class LearnedPlayer:
 
             pos = data[0]
             self.state = state.boom(self.state, state.ptoi(*pos))
+
+        if self.counter == 5 and self.color == BLACK_COLOR:
+            if self.state[44] == -2 or self.state[12] == -4 or self.state[14] == -4 or self.state[15] == -4:
+                self.moves.append(("MOVE", 1, (1, 6), (1, 7)))
+                self.moves.append(("MOVE", 2, (3, 7), (1, 7)))
+            else:
+                self.moves.append(("MOVE", 1, (6, 6), (6, 7)))
+                self.moves.append(("MOVE", 2, (4, 7), (6, 7)))
 
         self.prev_states.add(self.state.tobytes())
 

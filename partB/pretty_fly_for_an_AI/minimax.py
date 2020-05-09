@@ -64,11 +64,10 @@ def alpha_beta_search_ml(state, depth, ev, ml_logger, prev_states, expan):
     alpha = -float("inf")
     beta = float("inf")
 
-    # if np.count_nonzero(state) < 6:
-    #     expander = lambda s, opponent: st.next_states_black(s, opponent, avoid=prev_states)
-    # else:
-
-    expander = lambda s, opponent: expan(s, opponent, avoid=prev_states)
+    if np.count_nonzero(state) < 6:
+        expander = lambda s, opponent: st.next_states_black(s, opponent, avoid=prev_states)
+    else:
+        expander = lambda s, opponent: expan(s, opponent, avoid=prev_states)
 
     v, mv, pred_state = max_value_ml(state, depth, ev, alpha, beta, expander)
     ml_logger.add(pred_state)

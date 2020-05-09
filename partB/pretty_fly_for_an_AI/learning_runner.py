@@ -110,6 +110,11 @@ for i in range(args.num_iterations):
 
     np.save("./pretty_fly_for_an_AI/weights.npy", new_weights)
 
+    if as_white:
+        np.save("./pretty_fly_for_an_AI/weights_w.npy", new_weights)
+    else:
+        np.save("./pretty_fly_for_an_AI/weights_b.npy", new_weights)
+
     if args.verbose:
         print(f"Updated weights: {new_weights}")
 
