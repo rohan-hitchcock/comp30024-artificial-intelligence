@@ -8,6 +8,7 @@ except ModuleNotFoundError:
     import state as st
 
 def reward(state, weights):
+    """ The reward function"""
     if st.is_gameover(state):
         if np.all(state == 0):
             return 0
@@ -19,6 +20,8 @@ def reward(state, weights):
     return tanh(sum(w * f for w, f in zip(feature_vals, weights)))
 
 def feature(state):
+    """ Calculates a list of feature values given a state. Used by the reward 
+        function"""
     ours_idx = state > 0
     theirs_idx = state < 0
 
@@ -47,11 +50,10 @@ def feature(state):
     ]
 
 def dpartial_reward(state, weights, i):
-
+    """ Returns the ith partial derivative of the reward function"""
     fv = feature(state)[i]
 
     return fv * (1 - (reward(state, weights) ** 2))
-
 
 def manhattan(pos1, pos2):
     return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])

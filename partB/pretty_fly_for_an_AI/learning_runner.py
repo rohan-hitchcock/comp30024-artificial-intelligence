@@ -25,15 +25,6 @@ def load_states_to_numpy(dirpth, wld):
 
     return pred_states
 
-# Basically the same, just changed to store each file as an array of 4 states
-def load_states_to_numpy_2(dirpth):
-    state_files = os.listdir(dirpth)
-    pred_states = []
-    for i, state_file in enumerate(sorted(state_files, key=lambda s: int(s.split(".")[0]))):
-        pred_states.append(np.load(os.path.join(dirpth, state_file)))
-    return pred_states
-
-
 TEMP_DISCOUNT = 0.9
 LEARNING_RATE = 0.01
 
