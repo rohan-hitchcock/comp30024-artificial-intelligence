@@ -15,7 +15,7 @@ WEIGHTS_B = "./pretty_fly_for_an_AI/weights_b.npy"
 
 #current best weights (must be updated manually)
 LEARNED_WEIGHTS = "./pretty_fly_for_an_AI/weights_w.npy"
-LEARNED_WEIGHTS_BLACK = "./pretty_fly_for_an_AI/weights_b.npy"
+LEARNED_WEIGHTS_BLACK = "./pretty_fly_for_an_AI/weights_w.npy"
 
 BLACK_COLOR = "black"
 WHITE_COLOR = "white"

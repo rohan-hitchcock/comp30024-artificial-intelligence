@@ -53,7 +53,7 @@ as_white = True
 for i in range(args.num_iterations):
 
     if args.battleground:
-        to_run = ["python3", "-m", "battleground",
+        to_run = ["python3", "-m", "battleground", "-v1",
                   "pretty_fly_for_an_AI:LearnerPlayer", "pretty_fly_for_an_AI"]
 
 
@@ -91,7 +91,7 @@ for i in range(args.num_iterations):
         print(f"recorded as {wld}")
 
     # Loading in prev states too now
-    if as_white:
+    if color == "white":
         weights = np.load("./pretty_fly_for_an_AI/weights_w.npy")
     else:
         weights = np.load("./pretty_fly_for_an_AI/weights_b.npy")
