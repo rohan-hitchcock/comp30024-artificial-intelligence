@@ -1,0 +1,85 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 2.9 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{nyt/global//global/global}
+    \entry{baxter_tdleaflambda_1999}{article}{}
+      \name{author}{3}{}{%
+        {{uniquename=0,uniquepart=base,hash=5f0575a363e95b28a935fc4c0fc0dfc5}{%
+           family={Baxter},
+           familyi={B\bibinitperiod},
+           given={Jonathan},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+        {{uniquename=0,uniquepart=base,hash=e03aa2792f85bde1bb795365e3bdc0b7}{%
+           family={Tridgell},
+           familyi={T\bibinitperiod},
+           given={Andrew},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+        {{uniquename=0,uniquepart=base,hash=5488712a5a370cda5ee6aea808aacb96}{%
+           family={Weaver},
+           familyi={W\bibinitperiod},
+           given={Lex},
+           giveni={L\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{c716d40cb88d796f8cfffc96a7d7c719}
+      \strng{fullhash}{f6bfafdfd89b7de52e71c95aad4e1398}
+      \strng{bibnamehash}{f6bfafdfd89b7de52e71c95aad4e1398}
+      \strng{authorbibnamehash}{f6bfafdfd89b7de52e71c95aad4e1398}
+      \strng{authornamehash}{c716d40cb88d796f8cfffc96a7d7c719}
+      \strng{authorfullhash}{f6bfafdfd89b7de52e71c95aad4e1398}
+      \field{sortinit}{B}
+      \field{sortinithash}{276475738cc058478c1677046f857703}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{shorttitle}
+      \field{abstract}{In this paper we present {TDLeaf}(lambda), a variation on the {TD}(lambda) algorithm that enables it to be used in conjunction with minimax search. We present some experiments in both chess and backgammon which demonstrate its utility and provide comparisons with {TD}(lambda) and another less radical variant, {TD}-directed(lambda). In particular, our chess program, ``{KnightCap},'' used {TDLeaf}(lambda) to learn its evaluation function while playing on the Free Internet Chess Server ({FICS}, fics.onenet.net). It improved from a 1650 rating to a 2100 rating in just 308 games. We discuss some of the reasons for this success and the relationship between our results and Tesauro's results in backgammon.}
+      \field{day}{4}
+      \field{eprinttype}{arxiv}
+      \field{journaltitle}{{arXiv}:cs/9901001}
+      \field{month}{1}
+      \field{shorttitle}{{TDLeaf}(lambda)}
+      \field{title}{{TDLeaf}(lambda): Combining Temporal Difference Learning with Game-Tree Search}
+      \field{urlday}{10}
+      \field{urlmonth}{5}
+      \field{urlyear}{2020}
+      \field{year}{1999}
+      \field{dateera}{ce}
+      \field{urldateera}{ce}
+      \verb{eprint}
+      \verb cs/9901001
+      \endverb
+      \verb{file}
+      \verb arXiv Fulltext PDF:/home/rohan/Zotero/storage/24XZ4BPA/Baxter et al. - 1999 - TDLeaf(lambda) Combining Temporal Difference Lear.pdf:application/pdf;arXiv.org Snapshot:/home/rohan/Zotero/storage/NC3A5UJG/9901001.html:text/html
+      \endverb
+      \verb{urlraw}
+      \verb http://arxiv.org/abs/cs/9901001
+      \endverb
+      \verb{url}
+      \verb http://arxiv.org/abs/cs/9901001
+      \endverb
+      \keyw{Computer Science - Artificial Intelligence,Computer Science - Machine Learning,I.2.6}
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+

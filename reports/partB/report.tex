@@ -1,9 +1,26 @@
 \documentclass[11pt]{article}
 
+\usepackage[
+backend=biber,
+style=authoryear,
+citestyle=authoryear,
+maxcitenames=1,
+dashed=false,
+giveninits=true,
+terseinits=true,
+isbn=false
+]{biblatex}
+\renewbibmacro{in:}{}
+\DeclareFieldFormat
+  [misc]
+  {title}{\mkbibquote{#1}}
+
 \usepackage{fancyhdr}
 \usepackage[margin=1in,headheight=13.6pt]{geometry}
-
+\usepackage{enumitem}
 \usepackage[dvipsnames]{xcolor}
+\usepackage{mathtools}
+\usepackage{amssymb}
 
 %header and footer
 \pagestyle{fancy}
@@ -18,6 +35,7 @@
 %used for identifying drafting or notes
 \newcommand{\drafting}[1]{\textcolor{OliveGreen}{#1}}
 
+\addbibresource{report.bib}
 
 \begin{document}
 \title{\textbf{Assignment Part B}}
@@ -30,42 +48,76 @@
 }
 
 \section{Searching and pruning}
-\drafting{
-    \begin{itemize}
-        \item Used minimax with alpha-beta.
-        \item Additional pruning heuristics including pruning states we had already encountered before (helps avoid states which our evaluation function overestimates how good they are), and (others considered / used)
-        \item Move evaluation: static, [explain what it does]. Found it provided moderate speed improvements, but leaves a lot to be desired. Believe that a solution which dramatically improves upon this would need to be a lot more sophisticated, but would potentially have big gains.
-        \item Investigated principle variation search but found it did not offer significant improvements over alpha-beta because our move evaluation order was not good enough. 
-        \item Discuss approaches which vary depth to allow for some critical states to be searched very deep, such as doing this at the start. Why we didn't use it: when combined with our opening book, we believe the early states are strategically very important. Strong play early can make or break games. Don't want to use heaps of time at the start however in case this doesn't work. Late game is simple, its either lost or just a matter of tracking down opponents pieces. We continue to use our time budget for as long as possible but will revert to a shallow search if we run out of time.
-    \end{itemize}
-}
+Our search of the state space is based on a minimax search with alpha-beta pruning. \drafting{More explination here?}
+
+\subsection{Depth of minimax}
+In our final version, our player uses a minimax search to depth three until the time resource budget is almost exhausted, when it reverts to a minimax search of depth one. We considered approaches in which the depth varies, using a shallow search early in the game and a deeper search on moves in the mid and late game which are considered to be critical. This approach was rejected however, because when combined with our opening book (see Section \ref{sec:opening-book}), we believe the early game states are strategically important and offers important opportunities to attack. Searching too deep in the early game however may result in exhausting the time budget before the game is finished. 
+
+\subsection{State expansion order}
+Alpha-beta pruning is most effective when better moves are evaluated first in the search tree. With this in mind, we experimented with different expansion orderings and found that \drafting{description of move ordering} was most effective. This only resulted in rather moderate speed improvements however. We believe that this is because the best moves change significantly throughout the game, and than an approach which improves significantly on this would require a dynamic evaluation order depending on the current state of the the game. 
+
+\subsection{Pruning heuristics}
+We also experimented with various pruning heuristics to reduce the search space of minimax. \drafting{discussion of heursics / why included and not includeded}. In order to account for the 4-repeated-state game rule we do not consider any state which our player has already encountered in the game. This is under the assumption that if a state did not result in an improvement of our player's position the first time (such as by removing some opponent's tokens from the board) it will also not do so this time, and so is not worth exploring again. In addition to marginally improving the performance of minimax by reducing the search space, this also helps our player avoid repeating states which the evaluation function overestimates the potentially reward of. This addition particularly helped our player finish games faster in the late game. 
+
+
 
 \section{The evaluation function}
-
+\drafting{Very brief description of evaluation function including expression in terms of features and weights}
 \subsection{Feature selection}
-\drafting{
-    \begin{itemize}
-        \item Focused on 3 player behaviours: taking tokens, stacking, controlling space on the board. Taking tokens is obvious: we need to do this to win, stacking improves mobility which is important for both offence and defence. Controlling space allows for more strategic play.
-        \item Selected signed squared token difference to encourage taking tokens, as well as the number of opponent stacks (to encourage trading 1-1 if necessary).
-        \item Experimented with many features to encourage stacking, including having the number of each stack as a feature. Eventually found that the number of our player's stacks was the feature most amenable to training.
-        \item Used distance between our player and opponent's center of mass to cover space. This is a good trade off between something which is easy to calculate and something which captures a lot of information. Talk about how sum of distance from each stack to nearest opponent token would be better but completely intractable. CoM also encourages aggressive play in the late game when the opponent only has a few tokens remaining.
-    \end{itemize}
-}
+When selecting features we focused on encouraging three types of behaviour in our player: 
+\begin{description}[labelindent=\parindent]
+    \item[Taking tokens:] This is required to win the game.
+    \item[Stacking:] Improves mobility, providing an advantage in both offencive and defensive play.
+    \item[Controlling space:] Spreading our stacks around the board limits restricts the opponent's moves and provides more opportunities to attack.
+\end{description}
+To encourage taking tokens we defined the feature $f_1$ as the signed squared difference in our player's and opponents tokens, that is:
+\[
+    f_1(\texttt{state}) = \textrm{sgn} (n_p - n_o) \cdot (n_p - n_o) ^2
+\]
+where $n_p$ and $n_o$ are the number of our player's and the number of the opponent's tokens respectively. We would expect this feature to be weighted positively since it is positive when our player has more tokens than the opponent (our player is winning) and negative when our player has less tokens than the opponent (our player is losing). \drafting{Why signed squared difference?, Include discussion of the number of opponents stacks here too?}
 
+We experimented with many features to encourage stacking. In the final version we found the feature $f_2$, defined to be the number of our players stacks
+\[
+    f_2(\texttt{state}) = s_p 
+\]
+was best at encouraging stacking for our machine-learning approach. Another option we perused was using twelve separate features which were the number of stacks of each height (up to a height of twelve). This is an attractive option because it provides the evaluation function a great deal of flexibility to determine optimal stack heights, in balance with other features. However, we found this was not suitable for machine learning: stacks of specific heights occurred quite rarely so those features were often zero resulting in their weights not being updated. If the weight of one stack feature became too low, our player would never make stacks of that height, and thus the weight of that feature would never be improved in training. We found that the weight of the simpler $f_2$ was much easier to train, and resulted in better stacking behaviour.
 
+Features to encourage good control of space and proximity to the opponent were the hardest to define. Many features which would likely encourage this behaviour -- such as the number of opponent tokens within a fixed radius of our player's stacks, or the shortest distance from our player's stacks to the opponent -- made minimax search to a sufficient depth computationally infeasible. We found that the centre-of-mass of our player's and the opponent's stacks was a good balance between being easy to calculate and capturing enough information about the positioning of each player. We defined the centre-of-mass for player $x \in \{p, o\}$ as 
+\[
+    \texttt{com}_x = \frac{1}{|S_x|} \cdot \sum _{(a, b) \in S_x} \begin{pmatrix}
+        a \\ b
+    \end{pmatrix}
+\]
+where $S_x$ is the set of stack positions for player $x$. We experimented with several features involving centre-of-mass including the Manhattan distance between our player's centre-of-mass $\texttt{com}_p$ and the opponent's centre-of-mass $\texttt{com}_o$, and the Manhattan distance between our player's centre of mass and the centre of the board. In the final version we used two features $f_3$ and $f_4$ where
+\begin{align*}
+    f_3(\texttt{state}) = \frac{n_p}{d_1(\texttt{com}_p, \texttt{com}_o)} && f_4(\texttt{state}) = \frac{n_o}{d_1(\texttt{com}_p, \texttt{com}_o)} 
+\end{align*}
+where $n_p$ and $n_o$ are the number of our player's tokens and the opponent's tokens respectively. \drafting{Discuss why these features.}
 
 \subsection{Training the evaluation function}
-\drafting{
-    \begin{itemize}
-        \item Trained using TD-Leaf(lambda) with lambda = [insert lambda value]. Learning rate was gradually decreased (how?) as performance improved.
-        \item Ideally we would be able to play against a series of varied opponents increasing in difficulty (see paper). We aimed for as much variation as possible in training. This included play against a player making random moves, play against other players with different features, self-play, and play against other players on the battlefield (ideally we would have done this a lot more but battlefield games were at times hard to come by). This was done to avoid overfitting any particular players strategy. We observed that against players with simple features it could learn behaviour that it could learn to manipulate that opponents evalution function and to manufacture a draw due to the 4-repeated-state gamerule.
-        \item Initially used the same weights for white and black. This resulted in a player which was reasonably good as white but worse as black (long games with lots of draws). Using seperate weights when playing as white and black resulted in performance improvements when playing as both colours.
-        \item Initial manual tuning of weights was important. For example when training a player with initally random weights, it found a local maximum where games were very long and it drew frequently (can be thought of as a highly defensive player). TD-leaf doesn't favour winning faster, but this is important for our resource constraints. 
-    \end{itemize}
-}
+We trained the weights of our evaluation function using the TD-Leaf($\lambda$) algorithm described in \cite{baxter_tdleaflambda_1999}, with $\lambda = $\drafting{check lambda val, why this val?}. The learning rate started at [\drafting{val}] and was gradually decreased [\drafting{how?}] as performance improved. 
+
+Ideally, our player would train against a series of varied opponents, increasing in skill as our player improved. \cite{baxter_tdleaflambda_1999} attribute the significant improvement of KnightCap (a chess-playing agent trained using TD-Leaf($\lambda$)) in-part to the varied nature of its opponents which became better along with the agent. They discuss how learning via self-play was not as effective, and even after many more games of self play resulted in worse performance. 
+
+In light of this -- and lacking a large pool Expendibots players of varying skill levels -- we aimed to include as much variation as possible in training. This included training against:
+\begin{itemize}
+    \item A player making random moves.
+    \item Other players we were experimenting with.
+    \item Self-play and versions of itself with different feature weights.
+    \item Other groups players in the battlefield environment.
+\end{itemize}
+We tried to include as much play in the battlefield environment as possible, but at times these games were hard to come by. Variation in the opponent helped avoid over-fitting a particular player's strategy.
+
+Another factor \cite{baxter_tdleaflambda_1999} attribute to the success of KnightCap was that it started with a good set of starting weights. We also found this to be the case with our player. In cases where the initial weights were not tuned well enough we found that the player found local maxima where games were very long and it drew frequently (this can be thought of as the player adopting a hyper-defensive strategy). TD-Leaf($\lambda$) doesn't necessarily encourage players to win quickly, but this was an important when considering our resource constraints.
+
+\drafting{Discuss difference in weights for white and black}
+
 \section{Other aspects}
-\subsection{Opening book}
-\drafting{We included a sequence of (how many) fixed opening moves. These moves were found by playing games in real life, and chosen so they are at least not possibly detrimental. Initially this was done to help manage our resource budget. With a relatively shallow minimax search, the early game is hardest to navigate since the tokens are so far apart and all stacks are size 1 (the opening moves were some of the longest to evaluate). It also served to make the transition from early-to-mid game quicker (where our evaluation function performs better, good moves are at a depth our minimax can reach, our move generation order is better optimised so search speed improves). We found this had a big impact on our performance too. We believe this was because we entered the mid-game on our terms, rather than because our opponent had developed their position and advanced.}
+\subsection{Opening book} \label{sec:opening-book}
+We included a sequence of \drafting{how many?} fixed opening moves. These moves were found by playing games in real life, and chosen so that they are at least guaranteed to not be detrimental to our player. Initially this was done to help manage our resource budget. The opening moves were some of the longest to evaluate, likely because many branches had similar evaluations, reducing the capacity for pruning. With a relatively shallow minimax search, the early game is hardest to navigate since the tokens are so far apart and all stacks are size one.
 
+Adding an opening book also had a positive impact on the playing performance of our player. It served to make the transition from early to mid-game quicker, where our evaluation function performs better, good moves are at a depth our minimax can reach, and our evaluation ordering in minimax is better optimised for pruning. It also meant that we always entered the mid-game on our terms, rather than because our opponent had developed their position and advanced, resulting in better performance in the rest of the game.
 
+\pagebreak
+\printbibliography
 \end{document}
