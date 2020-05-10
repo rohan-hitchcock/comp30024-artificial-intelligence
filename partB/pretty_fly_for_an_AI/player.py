@@ -7,6 +7,8 @@ from pretty_fly_for_an_AI.minimax import alpha_beta_search_ml as minimax_ml
 from pretty_fly_for_an_AI.state_logging import StateLogger
 from pretty_fly_for_an_AI.evaluation import reward
 
+import time
+
 #weights for learning (can change)
 WEIGHTS_W = "./pretty_fly_for_an_AI/weights_w.npy"
 WEIGHTS_B = "./pretty_fly_for_an_AI/weights_b.npy"
@@ -17,6 +19,9 @@ LEARNED_WEIGHTS_BLACK = "./pretty_fly_for_an_AI/weights_b.npy"
 
 BLACK_COLOR = "black"
 WHITE_COLOR = "white"
+
+#time budget to use before decreasing minimax depth
+TIME_THRESHOLD = 55
 
 class Player:
     minimax_depth = 3
@@ -46,6 +51,10 @@ class Player:
         self.prev_states = set()
         self.prev_states.add(self.state.tobytes())
 
+        self.timer = 0
+
+        self.minimax_depth = Player.minimax_depth
+
         self.color = color
         if color == BLACK_COLOR:
             self.ev = Player.ev_black
@@ -57,12 +66,16 @@ class Player:
             self.moves = Player.moves_w
 
     def action(self):
-
+        
+        t0 = time.time()
         if self.moves:
             return self.moves.pop(0)
 
-        return minimax_learned(self.state, depth=Player.minimax_depth, ev=self.ev,
+        move = minimax_learned(self.state, depth=self.minimax_depth, ev=self.ev,
                                prev_states=self.prev_states, expan=self.expander)
+        t1 = time.time()
+        self.timer += (t1 - t0)
+        return move
 
     def update(self, color, action):
 
@@ -97,6 +110,11 @@ class Player:
 
         self.prev_states.add(self.state.tobytes())
         
+
+        print(self.timer)
+        if self.timer >= TIME_THRESHOLD:
+            self.minimax_depth = 1
+
 class LearnerPlayer:
     minimax_depth = 3
 
