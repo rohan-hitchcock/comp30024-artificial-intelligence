@@ -104,13 +104,14 @@ for i in range(args.num_iterations):
         weights = np.load("./pretty_fly_for_an_AI/weights_w.npy")
     else:
         weights = np.load("./pretty_fly_for_an_AI/weights_b.npy")
+
     pred_states = load_states_to_numpy("./pretty_fly_for_an_AI/ml_logging", wld)
 
     new_weights = tdleaf_update(weights, pred_states, reward, dpartial_reward, args.temp_discount, args.learning_rate)
 
     np.save("./pretty_fly_for_an_AI/weights.npy", new_weights)
 
-    if as_white:
+    if color == "white":
         np.save("./pretty_fly_for_an_AI/weights_w.npy", new_weights)
     else:
         np.save("./pretty_fly_for_an_AI/weights_b.npy", new_weights)

@@ -67,7 +67,6 @@ def alpha_beta_search_ml(state, depth, ev, ml_logger, prev_states, expan):
 
     if np.count_nonzero(state) < 6:
         expander = lambda s, opponent: st.next_states_black(s, opponent, avoid=prev_states)
-
     else:
         expander = lambda s, opponent: expan(s, opponent, avoid=prev_states)
 
