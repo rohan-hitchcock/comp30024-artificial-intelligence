@@ -1,13 +1,12 @@
 from math import ceil, tanh, sqrt
 import numpy as np
 
+#required since this module is imported in different ways when learning
 try:
     from pretty_fly_for_an_AI import state as st
 except ModuleNotFoundError:
     import state as st
 
-
-# Reward has to be passed prev states as well
 def reward(state, weights):
     if st.is_gameover(state):
         if np.all(state == 0):
@@ -18,7 +17,6 @@ def reward(state, weights):
 
     feature_vals = feature(state)
     return tanh(sum(w * f for w, f in zip(feature_vals, weights)))
-
 
 def feature(state):
     ours_idx = state > 0
@@ -48,12 +46,7 @@ def feature(state):
         np.count_nonzero(state < 0) / 12
     ]
 
-
 def dpartial_reward(state, weights, i):
-
-    # I think these could be applied to some of my features??
-    # if st.is_gameover(state) and (i == 1 or i == 2):
-    #     return 0
 
     fv = feature(state)[i]
 

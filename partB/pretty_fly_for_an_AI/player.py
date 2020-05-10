@@ -1,71 +1,68 @@
 import numpy as np
 from pretty_fly_for_an_AI import state
-from pretty_fly_for_an_AI.minimax import alpha_beta_search as minimax
+
 from pretty_fly_for_an_AI.minimax import alpha_beta_search_learned as minimax_learned
-
-from pretty_fly_for_an_AI.minimax import principle_variation_search as pvs
-
-import pretty_fly_for_an_AI.evaluation as ev
-
 from pretty_fly_for_an_AI.minimax import alpha_beta_search_ml as minimax_ml
+
 from pretty_fly_for_an_AI.state_logging import StateLogger
 from pretty_fly_for_an_AI.evaluation import reward
-from collections import deque
-from collections import defaultdict as dd
 
-from math import ceil
-
-WEIGHTS_FILE = "./pretty_fly_for_an_AI/weights.npy"
+#weights for learning (can change)
 WEIGHTS_W = "./pretty_fly_for_an_AI/weights_w.npy"
 WEIGHTS_B = "./pretty_fly_for_an_AI/weights_b.npy"
+
+#current best weights (must be updated manually)
 LEARNED_WEIGHTS = "./pretty_fly_for_an_AI/weights_w.npy"
 LEARNED_WEIGHTS_BLACK = "./pretty_fly_for_an_AI/weights_b.npy"
 
 BLACK_COLOR = "black"
 WHITE_COLOR = "white"
 
-
-turn_count = 0
-
-# This is a moderate player, its the one we can now beat
 class Player:
     minimax_depth = 3
 
-    ev = lambda state: Player.new_eval(state)
+    #allow for different weights when white or black
+    weights_white = np.load(LEARNED_WEIGHTS)
+    weights_black = np.load(LEARNED_WEIGHTS_BLACK)
 
-    @staticmethod
-    def manhattan(pos1, pos2):
-        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+    #allow for different evaluation functions when white or black
+    ev_white = lambda state: reward(state, Player.weights_white)
+    ev_black = lambda state: reward(state, Player.weights_black)
 
-    @staticmethod
-    def new_eval(s):
+    #allow for different expansion strategys when white or black
+    expander_w = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
+    expander_b = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
 
-        value = 0
-
-        ours = s[s > 0]
-        theirs = s[s < 0]
-        diff = (np.sum(ours) + np.sum(theirs))
-
-        # feature 1: Number of pieces for each player
-        value += 50 * diff
-
-        # feature: winning
-        if len(theirs) == 0:
-            value += 100000
-
-        return value
+    #opening moves
+    moves_w = [("MOVE", 1, (0, 1), (1, 1)), ("MOVE", 2, (1, 1), (3, 1)), ("MOVE", 3, (3, 1), (4, 1))]
+    moves_b = [("MOVE", 1, (3, 6), (3, 7)), ("MOVE", 1, (4, 6), (4, 7))]
 
     def __init__(self, color):
 
         self.state = state.create_start_state(color)
+        self.counter = 0
+
+        # Prev states initialised
+        self.prev_states = set()
+        self.prev_states.add(self.state.tobytes())
 
         self.color = color
-
-        self.counter = 0
+        if color == BLACK_COLOR:
+            self.ev = Player.ev_black
+            self.expander = Player.expander_b
+            self.moves = Player.moves_b
+        else:
+            self.ev = Player.ev_white
+            self.expander = Player.expander_w
+            self.moves = Player.moves_w
 
     def action(self):
 
-        return minimax(self.state, depth=Player.minimax_depth, ev=Player.ev)
+        if self.moves:
+            return self.moves.pop(0)
+
+        return minimax_learned(self.state, depth=Player.minimax_depth, ev=self.ev,
+                               prev_states=self.prev_states, expan=self.expander)
 
     def update(self, color, action):
 
@@ -75,7 +72,6 @@ class Player:
         opponent = self.color != color
 
         self.counter += 1
-        print(self.counter)
 
         if action_type == state.MOVE_ACTION:
 
@@ -83,10 +79,24 @@ class Player:
             self.state = state.move(self.state, n, state.ptoi(*sp), state.ptoi(*ep), opponent)
         else:
 
+            # previous states can now never occur, safe to clear memory
+            del self.prev_states
+            self.prev_states = set()
+
             pos = data[0]
             self.state = state.boom(self.state, state.ptoi(*pos))
 
+        #branching conditions in the opening book
+        if self.counter == 5 and self.color == BLACK_COLOR:
+            if self.state[44] == -2 or self.state[12] == -4 or self.state[14] == -4 or self.state[15] == -4:
+                self.moves.append(("MOVE", 1, (1, 6), (1, 7)))
+                self.moves.append(("MOVE", 2, (3, 7), (1, 7)))
+            else:
+                self.moves.append(("MOVE", 1, (6, 6), (6, 7)))
+                self.moves.append(("MOVE", 2, (4, 7), (6, 7)))
 
+        self.prev_states.add(self.state.tobytes())
+        
 class LearnerPlayer:
     minimax_depth = 3
 
@@ -116,11 +126,11 @@ class LearnerPlayer:
         if color == BLACK_COLOR:
             self.expander = LearnerPlayer.expander_b
             self.ev = LearnerPlayer.ev_b
-            self.moves = LearnedPlayer.moves_b
+            self.moves = LearnerPlayer.moves_b
         else:
             self.expander = LearnerPlayer.expander_w
             self.ev = LearnerPlayer.ev_w
-            self.moves = LearnedPlayer.moves_w
+            self.moves = LearnerPlayer.moves_w
 
         with open("./pretty_fly_for_an_AI/ml_logging/color.color", "w") as fp:
             fp.write(color)
@@ -133,8 +143,6 @@ class LearnerPlayer:
 
 
     def update(self, color, action):
-
-        global turn_count
 
         action_type, data = action[0], action[1:]
 
@@ -165,135 +173,6 @@ class LearnerPlayer:
                 self.moves.append(("MOVE", 1, (6, 6), (6, 7)))
                 self.moves.append(("MOVE", 2, (4, 7), (6, 7)))
 
-        self.prev_states.add(self.state.tobytes())
-
-
-class LearnedPlayer:
-    minimax_depth = 3
-
-    weights_white = np.load(LEARNED_WEIGHTS)
-    weights_black = np.load(LEARNED_WEIGHTS_BLACK)
-
-    ev_white = lambda state: reward(state, LearnedPlayer.weights_white)
-    ev_black = lambda state: reward(state, LearnedPlayer.weights_black)
-
-    expander_w = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
-    expander_b = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
-
-    moves_w = [("MOVE", 1, (0, 1), (1, 1)), ("MOVE", 2, (1, 1), (3, 1)), ("MOVE", 3, (3, 1), (4, 1))]
-    moves_b = [("MOVE", 1, (3, 6), (3, 7)), ("MOVE", 1, (4, 6), (4, 7))]
-
-    def __init__(self, color):
-
-        self.state = state.create_start_state(color)
-        self.counter = 0
-        # Prev states initialised
-        self.prev_states = set()
-        self.prev_states.add(self.state.tobytes())
-
-        self.color = color
-        if color == BLACK_COLOR:
-            self.ev = LearnedPlayer.ev_black
-            self.expander = LearnedPlayer.expander_b
-            self.moves = LearnedPlayer.moves_b
-        else:
-            self.ev = LearnedPlayer.ev_white
-            self.expander = LearnedPlayer.expander_w
-            self.moves = LearnedPlayer.moves_w
-
-    def action(self):
-
-        if self.moves:
-            return self.moves.pop(0)
-
-        return minimax_learned(self.state, depth=LearnedPlayer.minimax_depth, ev=self.ev,
-                               prev_states=self.prev_states, expan=self.expander)
-
-    def update(self, color, action):
-
-        action_type, data = action[0], action[1:]
-
-        # check if this is an opponents move
-        opponent = self.color != color
-
-        self.counter += 1
-
-        if action_type == state.MOVE_ACTION:
-
-            n, sp, ep = data
-            self.state = state.move(self.state, n, state.ptoi(*sp), state.ptoi(*ep), opponent)
-        else:
-
-            # previous states can now never occur, safe to clear memory
-            del self.prev_states
-            self.prev_states = set()
-
-            pos = data[0]
-            self.state = state.boom(self.state, state.ptoi(*pos))
-
-        if self.counter == 5 and self.color == BLACK_COLOR:
-            if self.state[44] == -2 or self.state[12] == -4 or self.state[14] == -4 or self.state[15] == -4:
-                self.moves.append(("MOVE", 1, (1, 6), (1, 7)))
-                self.moves.append(("MOVE", 2, (3, 7), (1, 7)))
-            else:
-                self.moves.append(("MOVE", 1, (6, 6), (6, 7)))
-                self.moves.append(("MOVE", 2, (4, 7), (6, 7)))
-
-        self.prev_states.add(self.state.tobytes())
-        
-        print(f"({turn_count})")
-
-
-class PvsPlayer:
-    minimax_depth = 3
-
-    weights = np.load(WEIGHTS_FILE)
-
-    ev = lambda state: reward(state, PvsPlayer.weights)
-
-    def __init__(self, color):
-
-        self.state = state.create_start_state(color)
-
-        # Prev states initialised
-        self.prev_states = set()
-        self.prev_states.add(self.state.tobytes())
-
-        self.color = color
-
-
-    def action(self):
-
-        global turn_count
-
-        turn_count += 1
-
-        return pvs(self.state, depth=PvsPlayer.minimax_depth, ev=PvsPlayer.ev,
-                          prev_states=self.prev_states)
-
-    def update(self, color, action):
-
-        global turn_count
-
-        action_type, data = action[0], action[1:]
-
-        # check if this is an opponents move
-        opponent = self.color != color
-
-        if action_type == state.MOVE_ACTION:
-
-            n, sp, ep = data
-            self.state = state.move(self.state, n, state.ptoi(*sp), state.ptoi(*ep), opponent)
-        else:
-            
-            #previous states can now never occur, safe to clear memory
-            del self.prev_states
-            self.prev_states = set()
-
-            pos = data[0]
-            self.state = state.boom(self.state, state.ptoi(*pos))
-
-        print(f"({turn_count})")
         self.prev_states.add(self.state.tobytes())
 
 if __name__ == "__main__":

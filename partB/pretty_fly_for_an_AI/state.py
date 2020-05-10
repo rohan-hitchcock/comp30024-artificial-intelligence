@@ -36,7 +36,6 @@ BOARD_EMPTY = np.zeros(BOARD_SIZE ** 2, dtype=np.int8)
         is the height of the stack at that position.
 """
 
-
 def to_string(s):
     board_2d = np.reshape(s, (BOARD_SIZE, BOARD_SIZE))
     out = ""
@@ -57,7 +56,6 @@ def to_string(s):
         out += "---+" + 8 * "----+" + "\n"
     out += "y/x|  0 |  1 |  2 |  3 |  4 |  5 |  6 |  7 |\n"
     return out
-
 
 def move(s, num_tokens, si, ei, opponent):
     """ Returns a new state object which is the result of applying move.
@@ -84,7 +82,6 @@ def move(s, num_tokens, si, ei, opponent):
     next_state[si] -= num_tokens
     next_state[ei] += num_tokens
     return next_state
-
 
 def boom(s, i):
     """ Returns a new state object which is the result of the token at pos
