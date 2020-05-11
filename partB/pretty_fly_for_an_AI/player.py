@@ -9,36 +9,36 @@ from pretty_fly_for_an_AI.evaluation import reward
 
 import time
 
-#weights for learning (can change)
+# weights for learning (can change)
 WEIGHTS_W = "./pretty_fly_for_an_AI/weights_w.npy"
 WEIGHTS_B = "./pretty_fly_for_an_AI/weights_b.npy"
 
-#current best weights (must be updated manually)
+# current best weights (must be updated manually)
 LEARNED_WEIGHTS = "./pretty_fly_for_an_AI/weights_learned_w.npy"
 LEARNED_WEIGHTS_BLACK = "./pretty_fly_for_an_AI/weights_learned_b.npy"
 
 BLACK_COLOR = "black"
 WHITE_COLOR = "white"
 
-#time budget to use before decreasing minimax depth
+# time budget to use before decreasing minimax depth
 TIME_THRESHOLD = 55
+
 
 class Player:
     minimax_depth = 3
 
-    #allow for different weights when white or black
+    # allow for different weights when white or black
     weights_white = np.load(LEARNED_WEIGHTS)
     weights_black = np.load(LEARNED_WEIGHTS_BLACK)
 
-    #allow for different evaluation functions when white or black
+    # allow for different evaluation functions when white or black
     ev_white = lambda state: reward(state, Player.weights_white)
     ev_black = lambda state: reward(state, Player.weights_black)
 
-    #Same expansion for black and white
+    # Same expansion for black and white
     expander = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
 
-
-    #opening moves
+    # opening moves
     moves_w = [("MOVE", 1, (0, 1), (1, 1)), ("MOVE", 2, (1, 1), (3, 1)), ("MOVE", 3, (3, 1), (4, 1))]
     moves_b = [("MOVE", 1, (3, 6), (3, 7)), ("MOVE", 1, (4, 6), (4, 7))]
 
@@ -55,18 +55,18 @@ class Player:
 
         self.minimax_depth = Player.minimax_depth
 
+        self.expander = Player.expander
+
         self.color = color
         if color == BLACK_COLOR:
             self.ev = Player.ev_black
-            self.expander = Player.expander_b
             self.moves = Player.moves_b
         else:
             self.ev = Player.ev_white
-            self.expander = Player.expander_w
             self.moves = Player.moves_w
 
     def action(self):
-        
+
         t0 = time.time()
         if self.moves:
             return self.moves.pop(0)
@@ -99,7 +99,7 @@ class Player:
             pos = data[0]
             self.state = state.boom(self.state, state.ptoi(*pos))
 
-        #branching conditions in the opening book
+        # branching conditions in the opening book
         if self.counter == 5 and self.color == BLACK_COLOR:
             if self.state[44] == -2 or self.state[12] == -4 or self.state[14] == -4 or self.state[15] == -4:
                 self.moves.append(("MOVE", 1, (1, 6), (1, 7)))
@@ -112,6 +112,7 @@ class Player:
 
         if self.timer >= TIME_THRESHOLD:
             self.minimax_depth = 1
+
 
 class LearnerPlayer:
     minimax_depth = 3
@@ -157,7 +158,6 @@ class LearnerPlayer:
         return minimax_ml(self.state, depth=LearnerPlayer.minimax_depth, ev=self.ev, ml_logger=self.logger,
                           prev_states=self.prev_states, expan=self.expander)
 
-
     def update(self, color, action):
 
         action_type, data = action[0], action[1:]
@@ -190,6 +190,7 @@ class LearnerPlayer:
                 self.moves.append(("MOVE", 2, (4, 7), (6, 7)))
 
         self.prev_states.add(self.state.tobytes())
+
 
 if __name__ == "__main__":
     pass
