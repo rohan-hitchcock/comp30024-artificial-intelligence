@@ -14,8 +14,8 @@ WEIGHTS_W = "./pretty_fly_for_an_AI/weights_w.npy"
 WEIGHTS_B = "./pretty_fly_for_an_AI/weights_b.npy"
 
 #current best weights (must be updated manually)
-LEARNED_WEIGHTS = "./pretty_fly_for_an_AI/weights_w.npy"
-LEARNED_WEIGHTS_BLACK = "./pretty_fly_for_an_AI/weights_w.npy"
+LEARNED_WEIGHTS = "./pretty_fly_for_an_AI/weights_learned_w.npy"
+LEARNED_WEIGHTS_BLACK = "./pretty_fly_for_an_AI/weights_learned_b.npy"
 
 BLACK_COLOR = "black"
 WHITE_COLOR = "white"
@@ -34,9 +34,9 @@ class Player:
     ev_white = lambda state: reward(state, Player.weights_white)
     ev_black = lambda state: reward(state, Player.weights_black)
 
-    #allow for different expansion strategys when white or black
-    expander_w = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
-    expander_b = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
+    #Same expansion for black and white
+    expander = lambda s, opponent, avoid=dict(): state.next_states(s, opponent, avoid=avoid)
+
 
     #opening moves
     moves_w = [("MOVE", 1, (0, 1), (1, 1)), ("MOVE", 2, (1, 1), (3, 1)), ("MOVE", 3, (3, 1), (4, 1))]
@@ -109,9 +109,7 @@ class Player:
                 self.moves.append(("MOVE", 2, (4, 7), (6, 7)))
 
         self.prev_states.add(self.state.tobytes())
-        
 
-        print(self.timer)
         if self.timer >= TIME_THRESHOLD:
             self.minimax_depth = 1
 

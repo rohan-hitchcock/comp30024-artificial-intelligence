@@ -3,8 +3,8 @@ import numpy as np
 import math
 
 
-# ----------------------------------------- LEARNER ----------------------------------- #
-# New Implementation. Prev states now need to be passed into here so they can be passed to reward!!!
+# Learner variation with logging ----------------------------------- #
+
 def alpha_beta_search_ml(state, depth, ev, ml_logger, prev_states, expan):
     alpha = -float("inf")
     beta = float("inf")
@@ -63,32 +63,23 @@ def min_value_ml(state, depth, ev, alpha, beta, expander):
     return v, move, pred_state
 
 
-# ------------------------------------------ LEARNED -----------------------------------------#
-counter = 0
-
-
-# Implementation for learned player
+# Standard best player variation -------------------------------------- #
 def alpha_beta_search_learned(state, depth, ev, prev_states, expan):
     alpha = -float("inf")
     beta = float("inf")
-    # if np.count_nonzero(state) > 19:
-    #     depth = 1
-    #     expander = lambda s, opponent: expan(s, opponent, avoid=prev_states)
-    # elif np.count_nonzero(state) < 5:
-    #     depth = 5
-    #     expander = lambda s, opponent: st.next_states_end(s, opponent, avoid=prev_states)
-    # else:
-
     if np.count_nonzero(state) < 6:
         expander = lambda s, opponent: st.next_states_black(s, opponent, avoid=prev_states)
     else:
         expander = lambda s, opponent: expan(s, opponent, avoid=prev_states)
-    # expander = lambda s, opponent: expan(s, opponent, avoid=prev_states)
 
     v, mv = max_value_learned(state, depth, ev, alpha, beta, expander)
-    global counter
-    print(counter)
+
+    if mv is None:
+        expander = lambda s, opponent: st.next_states_black(s, opponent)
+        v, mv, pred_state = max_value_ml(state, depth, ev, alpha, beta, expander)
+
     return mv
+
 
 def max_value_learned(state, depth, ev, alpha, beta, expander):
     if depth == 0 or st.is_gameover(state):
@@ -97,8 +88,6 @@ def max_value_learned(state, depth, ev, alpha, beta, expander):
     v = -float("inf")
     move = None
     for mv, child_state in expander(state, False):
-        global counter
-        counter += 1
         score, came_from = min_value_learned(child_state, depth - 1, ev, alpha, beta, expander)
         if score > v:
             v = score
@@ -110,6 +99,7 @@ def max_value_learned(state, depth, ev, alpha, beta, expander):
         alpha = max(alpha, v)
     return v, move
 
+
 def min_value_learned(state, depth, ev, alpha, beta, expander):
     if depth == 0 or st.is_gameover(state):
         return ev(state), None
@@ -117,8 +107,6 @@ def min_value_learned(state, depth, ev, alpha, beta, expander):
     v = float("inf")
     move = None
     for mv, child_state in expander(state, True):
-        global counter
-        counter += 1
         score, came_from = max_value_learned(child_state, depth - 1, ev, alpha, beta, expander)
         if score < v:
             v = score
@@ -129,19 +117,18 @@ def min_value_learned(state, depth, ev, alpha, beta, expander):
         beta = min(beta, v)
     return v, move
 
-# IMPLEMENTATION FOR MODERATE PLAYER ------------------------------------------
+
+# Implementation for moderate player ------------------------------------------ #
 def alpha_beta_search(state, depth, ev):
     alpha = -float("inf")
     beta = float("inf")
     v, mv = max_value(state, depth, ev, alpha, beta)
-    # print("summary: v= " + str(v) + " on move: " + str(mv))
     return mv
 
 
 def max_value(state, depth, ev, alpha, beta):
     if depth == 0 or st.is_gameover(state):
         return ev(state), None
-
     v = -float("inf")
     child = None
     move = None
@@ -151,15 +138,12 @@ def max_value(state, depth, ev, alpha, beta):
             v = score
             child = came_from
             move = mv
-        # v = max(v, min_value(child_state, depth - 1, ev, alpha, beta)[0])
 
         if v >= beta:
-            # print("summary max: v= " + str(v) + " from: " + str(child) + " on move: " + str(move))
-
             return v, move
         alpha = max(alpha, v)
-    # print("summary max: v= " + str(v) + " from: " + str(child) + " on move: " + str(move))
     return v, move
+
 
 def min_value(state, depth, ev, alpha, beta):
     if depth == 0 or st.is_gameover(state):
@@ -174,17 +158,15 @@ def min_value(state, depth, ev, alpha, beta):
             v = score
             child = came_from
             move = mv
-        # v = min(v, max_value(child_state, depth - 1, ev, alpha, beta)[0])
 
         if v <= alpha:
-            # print("summary min: v= " + str(v) + " from: " + str(child) + " on move: " + str(move))
             return v, move
         beta = min(beta, v)
-    # print("summary min: v= " + str(v) + " from: " + str(child) + " on move: " + str(move))
+
     return v, move
 
 
-# Principle variation seach experiment ----------------------------------------
+# Principle variation seach experiment ---------------------------------------- #
 def principle_variation_search(state, depth, ev, prev_states):
     expander = lambda s, opponent: st.next_states(s, opponent, avoid=prev_states)
     _, move = pvs_algorithm(state, depth, -float("inf"), float("inf"), False, ev, expander)
@@ -193,6 +175,7 @@ def principle_variation_search(state, depth, ev, prev_states):
         print("oh no!")
 
     return move
+
 
 def pvs_algorithm(state, depth, alpha, beta, opponent, ev, expander):
     if depth == 0 or st.is_gameover(state):
