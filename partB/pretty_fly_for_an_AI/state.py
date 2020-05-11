@@ -36,6 +36,7 @@ BOARD_EMPTY = np.zeros(BOARD_SIZE ** 2, dtype=np.int8)
         is the height of the stack at that position.
 """
 
+
 def to_string(s):
     board_2d = np.reshape(s, (BOARD_SIZE, BOARD_SIZE))
     out = ""
@@ -56,6 +57,7 @@ def to_string(s):
         out += "---+" + 8 * "----+" + "\n"
     out += "y/x|  0 |  1 |  2 |  3 |  4 |  5 |  6 |  7 |\n"
     return out
+
 
 def move(s, num_tokens, si, ei, opponent):
     """ Returns a new state object which is the result of applying move.
@@ -82,6 +84,7 @@ def move(s, num_tokens, si, ei, opponent):
     next_state[si] -= num_tokens
     next_state[ei] += num_tokens
     return next_state
+
 
 def boom(s, i):
     """ Returns a new state object which is the result of the token at pos
@@ -115,86 +118,8 @@ def boom(s, i):
 
 # ------------------------------ END GAME MOVES ----------------------------------- #
 
-def move_positions_end(stack_i, height):
-    """ Finds the board indexes which a stack at board index stack_i can move to
 
-        Args:
-            stack_i: a board index of the stack
-            height: the height of the stack
-
-        Returns:
-            The board indexes which stack_i may move to
-    """
-    mp = []
-
-    x0, y0 = itop(stack_i)
-
-    # iterate over move distances
-
-    for d in range(height, 0, -3):
-
-        if 0 <= y0 - d: mp.append(ptoi(x0, y0 - d))
-        if BOARD_SIZE > y0 + d: mp.append(ptoi(x0, y0 + d))
-        if 0 <= x0 - d: mp.append(ptoi(x0 - d, y0))
-        if BOARD_SIZE > x0 + d: mp.append(ptoi(x0 + d, y0))
-
-    return np.array(mp)
-
-
-def next_states_end(s, opponent, avoid=dict()):
-    """ A generator for the states accessible from this state via valid moves.
-
-        Produces the State as well as an identifier for the action taken.
-
-        Args:
-            s: the board state
-            opponent: set to True if the opponent is making the move.
-
-        Yields:
-            tuples of the form (name, state) where name is the identifier
-            of the action and state is the State object resulting from the
-            action.
-    """
-    # get the indexes of the stacks of the player making the move
-    stacks = np.flatnonzero(s < 0) if opponent else np.flatnonzero(s > 0)
-
-    # All moves
-    for si in stacks:
-
-        height = abs(s[si])
-
-        for to_i in move_positions_end(si, height):
-            # checks if to_i is either empty or the same color as si
-            if s[to_i] * s[si] >= 0:
-                # Moves generated from moving least first, to moving all last.
-                if height == 1:
-                    moves = [1]
-                else:
-                    moves = [1, height]
-                for n in moves:
-
-                    next_state = move(s, n, si, to_i, opponent)
-                    if next_state.tobytes() not in avoid:
-                        yield move_name(n, si, to_i), next_state
-
-    for si in stacks:
-
-        # Assumes that opponent also wont blow up. If it does, thats fine but dont need to generate the move.
-        if not opponent and any(pos < 0 for pos in s[boom_radius(si)]):
-            next_state = boom(s, si)
-
-            if next_state.tobytes() not in avoid:
-                yield boom_name(si), next_state
-
-        if opponent and any(pos > 0 for pos in s[boom_radius(si)]):
-            next_state = boom(s, si)
-
-            if next_state.tobytes() not in avoid:
-                yield boom_name(si), next_state
-
-
-
-# ---------------------------- NORMAL MOVE ORDER (WHITE) -----------------------------#
+# Normal Move Ordering ----------------------------- #
 def next_states(s, opponent, avoid=dict()):
     """ A generator for the states accessible from this state via valid moves.
 
@@ -264,8 +189,8 @@ def move_positions(stack_i, height):
     return np.array(mp)
 
 
-# --------------------------------- BLACK MOVE ORDERING --------------------------------- #
-def move_positions_black(stack_i, height):
+# End game move ordering --------------------------------- #
+def move_positions_end(stack_i, height):
     """ Finds the board indexes which a stack at board index stack_i can move to
 
         Args:
@@ -291,7 +216,7 @@ def move_positions_black(stack_i, height):
     return np.array(mp)
 
 
-def next_states_black(s, opponent, avoid=dict()):
+def next_states_end(s, opponent, avoid=dict()):
     """ A generator for the states accessible from this state via valid moves.
 
         Produces the State as well as an identifier for the action taken.
@@ -323,7 +248,7 @@ def next_states_black(s, opponent, avoid=dict()):
 
         height = abs(s[si])
 
-        for to_i in move_positions_black(si, height):
+        for to_i in move_positions_end(si, height):
             # checks if to_i is either empty or the same color as si
             if s[to_i] * s[si] >= 0:
 
