@@ -109,7 +109,6 @@ class Player:
                 self.moves.append(("MOVE", 2, (4, 7), (6, 7)))
 
         self.prev_states.add(self.state.tobytes())
-
         if self.timer >= TIME_THRESHOLD:
             self.minimax_depth = 1
 
@@ -166,7 +165,6 @@ class LearnerPlayer:
         opponent = self.color != color
 
         self.counter += 1
-        print(self.counter)
 
         if action_type == state.MOVE_ACTION:
 

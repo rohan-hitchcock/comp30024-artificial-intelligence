@@ -25,8 +25,8 @@ def load_states_to_numpy(dirpth, wld):
 
     return pred_states
 
-TEMP_DISCOUNT = 0.9
-LEARNING_RATE = 0.01
+TEMP_DISCOUNT = 0.8
+LEARNING_RATE = 0.005
 
 parser = argparse.ArgumentParser(description="For training a player.")
 
@@ -53,8 +53,8 @@ as_white = True
 for i in range(args.num_iterations):
 
     if args.battleground:
-        to_run = ["python3", "-m", "battleground", "-v1",
-                  "pretty_fly_for_an_AI:LearnerPlayer", "pretty_fly_for_an_AI"]
+        to_run = ["python3", "-m", "battleground",
+                  "pretty_fly_for_an_AI:LearnerPlayer", "Im_learning_bare_with_me"]
 
 
     elif as_white:
