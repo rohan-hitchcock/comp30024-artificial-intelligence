@@ -68,6 +68,7 @@ def main():
         start = State.create_from_json(file)
 
     state_seq = searcher.search_board_states(start)
+    util.print_board(start.get_board_dict())
     if state_seq is None:
         print("No path found.")
     
